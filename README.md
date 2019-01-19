@@ -1,9 +1,13 @@
 # Griffin+ PreBuildWizard
 
+[![Build (master)](https://img.shields.io/appveyor/ci/ravenpride/prebuildwizard/master.svg?logo=appveyor)](https://ci.appveyor.com/project/ravenpride/prebuildwizard/branch/master)
+[![Release](https://img.shields.io/github/release/griffinplus/prebuildwizard.svg?logo=github)](https://github.com/GriffinPlus/PreBuildWizard/releases)
+
+
 ## Overview
 
 This repository contains the Griffin+ *PreBuildWizard*, a tool that is called before building Griffin+ projects
-based on Visual Studio projects.
+based on Visual Studio.
 
 ### Version Patching
 
