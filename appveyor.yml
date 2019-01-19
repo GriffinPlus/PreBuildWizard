@@ -24,14 +24,16 @@ build_script:
   - powershell -file Build.ps1 -buildserver
 
 after_build:
-  - ps: cd _build/PreBuildWizard.AnyCPU.Release ; 7z.exe a PreBuildWizard-v$env:GitVersion_MajorMinorPatch.zip -x!*.pdb .
+  - ps: 7z.exe a PreBuildWizard-v$env:GitVersion_MajorMinorPatch.zip '-x!*.pdb' .\_build\PreBuildWizard.AnyCPU.Release\*
   
 #---------------------------------#
 #      packaging artifacts        #
 #---------------------------------#
 
 artifacts:
-  - path: '_build/PreBuildWizard.AnyCPU.Release\PreBuildWizard-v$(GitVersion_MajorMinorPatch).zip'
+  - path: 'PreBuildWizard-v$(GitVersion_MajorMinorPatch).zip'
+    name: Application
+    type: zip
 
 #---------------------------------#
 #     deployment configuration    #
@@ -42,7 +44,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: HYngJp8YBsLRs4xGHt/P0ry3dVuu+FqEWvEJvVv4IOD6gFpxBAsQxz4yPjiy2dKp
-  artifact: _build/PreBuildWizard.AnyCPU.Release\PreBuildWizard-v$(GitVersion_MajorMinorPatch).zip
+  artifact: PreBuildWizard-v$(GitVersion_MajorMinorPatch).zip
   draft: false
   prerelease: false
   force_update: true
