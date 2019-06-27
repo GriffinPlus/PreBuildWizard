@@ -105,8 +105,6 @@ namespace GriffinPlus.PreBuildWizard
 					mFilesToProcess.Add(fullFilePath);
 				}
 			}
-
-			ScanNugetProjectAssets(directory);
 		}
 
 		/// <summary>
@@ -126,8 +124,6 @@ namespace GriffinPlus.PreBuildWizard
 				}
 			}
 
-			CheckNuGetConsistency();
-
 			sLog.Write(LogLevel.Note, "Processing completed.");
 		}
 
@@ -137,14 +133,9 @@ namespace GriffinPlus.PreBuildWizard
 		/// The project.assets.json files are created by the restoration of NuGet packages. 
 		/// </summary>
 		/// <param name="directory">Path of the directory to scan.</param>
-		private void ScanNugetProjectAssets(string directory)
+		public void ScanNugetProjectAssets(string directory)
 		{
-			string projectsAssetsDirectoryPath = Path.Combine(directory, cBuildFolderName, cObjectFolderName);
-			if (!Directory.Exists(projectsAssetsDirectoryPath))
-			{
-				throw new DirectoryNotFoundException($"Expected directory '{projectsAssetsDirectoryPath}' does not exist.");
-			}
-			foreach (string projectPath in Directory.GetDirectories(projectsAssetsDirectoryPath))
+			foreach (string projectPath in Directory.GetDirectories(directory))
 			{
 				string projectId = Path.GetFileName(projectPath);
 				string projectAssetsPath = Path.Combine(projectPath, cProjectAssetsName);
@@ -158,7 +149,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// files of the solution and detect inconsistencies when two projects reference the same NuGet package 
 		/// in different versions.
 		/// </summary>
-		private void CheckNuGetConsistency()
+		public void CheckNuGetConsistency()
 		{
 			Dictionary<string, Dictionary<string, string>> targetFrameworks = new Dictionary<string, Dictionary<string, string>>();
 

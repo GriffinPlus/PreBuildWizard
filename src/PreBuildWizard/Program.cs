@@ -38,6 +38,9 @@ namespace GriffinPlus.PreBuildWizard
 			[Option('v', Default = false)]
 			public bool Verbose { get; set; }
 
+			[Option('b', "baseIntermediateOutputPath")]
+			public string BaseIntermediateOutputPath { get; set; }
+
 			[Value(0, Min = 1)]
 			public IEnumerable<string> Paths { get; set; }
 		}
@@ -155,6 +158,28 @@ namespace GriffinPlus.PreBuildWizard
 					}
 				}
 
+				// scan for NuGet project assets when option is set
+				if (!string.IsNullOrEmpty(options.BaseIntermediateOutputPath))
+				{
+					if (Directory.Exists(options.BaseIntermediateOutputPath))
+					{
+						try
+						{
+							processor.ScanNugetProjectAssets(options.BaseIntermediateOutputPath);
+						}
+						catch (Exception ex)
+						{
+							sLog.Write(LogLevel.Error, "Scanning for NuGet project assets failed. Exception: {0}", ex);
+							return ExitCode.GeneralError;
+						}
+					}
+					else
+					{
+						sLog.Write(LogLevel.Note, "The specified directory ({0}) does not exist.", options.BaseIntermediateOutputPath);
+						return ExitCode.ArgumentError;
+					}
+				}
+
 				// process files
 				try
 				{
@@ -163,6 +188,17 @@ namespace GriffinPlus.PreBuildWizard
 				catch (Exception ex)
 				{
 					sLog.Write(LogLevel.Error, "Processing files failed. Exception: {0}", ex);
+					return ExitCode.GeneralError;
+				}
+
+				// process NuGet consistency check
+				try
+				{
+					processor.CheckNuGetConsistency();
+				}
+				catch (Exception ex)
+				{
+					sLog.Write(LogLevel.Error, "Processing NuGet consistency failed. Exception: {0}", ex);
 					return ExitCode.GeneralError;
 				}
 			}
@@ -209,7 +245,6 @@ namespace GriffinPlus.PreBuildWizard
 		static void PrintUsage(IEnumerable<Error> errors, TextWriter writer)
 		{
 			Version version = Assembly.GetExecutingAssembly().GetName().Version;
-			writer.WriteLine("  BST eltromat International GmbH");
 			writer.WriteLine(string.Format("  PreBuildWizard v{0}", version));
 			writer.WriteLine("--------------------------------------------------------------------------------");
 
@@ -252,7 +287,16 @@ namespace GriffinPlus.PreBuildWizard
 			writer.WriteLine();
 			writer.WriteLine("  USAGE:");
 			writer.WriteLine();
-			writer.WriteLine("    PreBuildWizard.exe [-v] <path>");
+			writer.WriteLine("    PreBuildWizard.exe [-v] [-b|--baseIntermediateOutputPath <bpath>] <path>");
+			writer.WriteLine();
+			writer.WriteLine("    [-v]");
+			writer.WriteLine("      Sets output to verbose.");
+			writer.WriteLine();
+			writer.WriteLine("    [-b|--baseIntermediateOutputPath <bpath>]");
+			writer.WriteLine("      BaseIntermediateOutputPath of msbuild to check for consistency of NuGet packages.");
+			writer.WriteLine();
+			writer.WriteLine("    <path>");
+			writer.WriteLine("      One or more paths were files to patch can be found.");
 			writer.WriteLine();
 			writer.WriteLine("--------------------------------------------------------------------------------");
 		}
