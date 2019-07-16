@@ -143,7 +143,7 @@ namespace GriffinPlus.PreBuildWizard
 						}
 						catch (Exception ex)
 						{
-							sLog.Write(LogLevel.Error, "Scanning for files to process failed. Exception: {0}", ex);
+							sLog.Write(LogLevel.Error, "Scanning for files to process failed. Exception: {0}", ex.ToString());
 							return ExitCode.GeneralError;
 						}
 					}
@@ -169,7 +169,7 @@ namespace GriffinPlus.PreBuildWizard
 						}
 						catch (Exception ex)
 						{
-							sLog.Write(LogLevel.Error, "Scanning for NuGet project assets failed. Exception: {0}", ex);
+							sLog.Write(LogLevel.Error, "Scanning for NuGet project assets failed. Exception: {0}", ex.ToString());
 							return ExitCode.GeneralError;
 						}
 					}
@@ -187,7 +187,7 @@ namespace GriffinPlus.PreBuildWizard
 				}
 				catch (Exception ex)
 				{
-					sLog.Write(LogLevel.Error, "Processing files failed. Exception: {0}", ex);
+					sLog.Write(LogLevel.Error, "Processing files failed. Exception: {0}", ex.ToString());
 					return ExitCode.GeneralError;
 				}
 
@@ -198,13 +198,13 @@ namespace GriffinPlus.PreBuildWizard
 				}
 				catch (Exception ex)
 				{
-					sLog.Write(LogLevel.Error, "Processing NuGet consistency failed. Exception: {0}", ex);
+					sLog.Write(LogLevel.Error, "Processing NuGet consistency failed. Exception: {0}", ex.ToString());
 					return ExitCode.GeneralError;
 				}
 			}
 			catch (Exception ex)
 			{
-				sLog.Write(LogLevel.Error, "Unhandled Exception: {0}", ex);
+				sLog.Write(LogLevel.Error, "Unhandled Exception: {0}", ex.ToString());
 				return ExitCode.GeneralError;
 			}
 
