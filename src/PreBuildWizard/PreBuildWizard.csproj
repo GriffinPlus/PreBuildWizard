@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>BSTe.PreBuildWizard</RootNamespace>
+    <RootNamespace>GriffinPlus.PreBuildWizard</RootNamespace>
     <AssemblyName>PreBuildWizard</AssemblyName>
     <TargetFrameworkProfile />
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
