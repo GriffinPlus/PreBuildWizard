@@ -1,0 +1,80 @@
+trigger:
+  tags:
+    include:
+    - v*
+  branches:
+    include:
+    - master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  # runtime identifiers (see https://docs.microsoft.com/en-us/dotnet/core/rid-catalog)
+  targets: 'win10-x86,win10-x64'
+
+steps:
+- task: GitVersion@5
+  inputs:
+    runtime: 'core'
+  displayName: 'Determine Version Number'
+
+- task: NuGetToolInstaller@1
+  displayName: Install NuGet
+  
+- task: NuGetCommand@2
+  displayName: Restore NuGet Packages
+  inputs:
+    restoreSolution: '$(solution)'
+
+- powershell: |
+    $env:DOTNET_CLI_TELEMETRY_OPTOUT = 'true'
+    dotnet publish `
+    -c $(buildConfiguration) `
+    -o "$(Build.ArtifactStagingDirectory)/portable" `
+    /p:TargetFramework=netcoreapp3.1
+    foreach ($target in '$(targets)'.Split(',')) {
+        dotnet publish `
+            -c $(buildConfiguration) `
+            -r $target `
+            -o "$(Build.ArtifactStagingDirectory)/standalone/$target" `
+            /p:TargetFramework=netcoreapp3.1 `
+            /p:PublishSingleFile=true
+    }
+  displayName: Build
+  
+- powershell: |
+    Write-Host "Copying files for portable version..."
+    Copy-Item README.md "$(Build.ArtifactStagingDirectory)/portable"
+    Copy-Item LICENSE "$(Build.ArtifactStagingDirectory)/portable"
+    Copy-Item THIRD_PARTY_NOTICES "$(Build.ArtifactStagingDirectory)/portable"
+    Remove-Item "$(Build.ArtifactStagingDirectory)/portable/*.pdb"
+    Compress-Archive -Path "$(Build.ArtifactStagingDirectory)/portable/" "$(Build.ArtifactStagingDirectory)/portable/PreBuildWizard-v$(GitVersion.SemVer).zip"
+    foreach ($target in '$(targets)'.Split(',')) {
+        Write-Host "Copying files for standalone version (target '$target')..."
+        Copy-Item README.md "$(Build.ArtifactStagingDirectory)/standalone/$target"
+        Copy-Item LICENSE "$(Build.ArtifactStagingDirectory)/standalone/$target"
+        Copy-Item THIRD_PARTY_NOTICES "$(Build.ArtifactStagingDirectory)/standalone/$target"
+        Remove-Item "$(Build.ArtifactStagingDirectory)/standalone/$target/*.pdb"
+        Compress-Archive -Path "$(Build.ArtifactStagingDirectory)/standalone/$target/" "$(Build.ArtifactStagingDirectory)/standalone/$target/PreBuildWizard-standalone-$target-v$(GitVersion.SemVer).zip"
+    }
+  condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
+  displayName: Create Release Packages
+
+- task: GitHubRelease@1
+  displayName: Publish to Github Releases
+  condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
+  inputs:
+    gitHubConnection: 'Github'
+    repositoryName: '$(Build.Repository.Name)'
+    action: 'edit'
+    target: '$(Build.SourceVersion)'
+    tag: '$(Build.SourceBranchName)'
+    title: 'Product Release $(GitVersion.SemVer)'
+    releaseNotesSource: 'inline'
+    assets: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+    changeLogCompareToRelease: 'lastFullRelease'
+    changeLogType: 'commitBased'
