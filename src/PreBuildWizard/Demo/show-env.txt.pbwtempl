@@ -1,0 +1,11 @@
+@using RazorLight
+@using GriffinPlus.PreBuildWizard
+@using System.Collections.Generic
+
+Environment variables:
+
+@foreach(var env in Model.Env)
+{
+@env.Key@:=@env.Value
+}
+

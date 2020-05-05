@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace GriffinPlus.PreBuildWizard
@@ -85,7 +86,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="appCore">App core that runs the file processor.</param>
 		/// <param name="path">Path of the file to process.</param>
-		public void Process(AppCore appCore, string path)
+		public Task ProcessAsync(AppCore appCore, string path)
 		{
 			bool isCompleted = false;
 			XmlDocument doc = new XmlDocument
@@ -216,9 +217,10 @@ namespace GriffinPlus.PreBuildWizard
 
 			if (isCompleted)
 			{
-				return;
+				return Task.CompletedTask;
 			}
-			//should never get here...
+
+			// should never get here...
 			throw new NotSupportedException("The file format is not supported.");
 		}
 	}

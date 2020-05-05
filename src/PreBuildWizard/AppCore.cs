@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace GriffinPlus.PreBuildWizard
 {
@@ -110,7 +111,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// <summary>
 		/// Processes the files determined by scans.
 		/// </summary>
-		public void Process()
+		public async Task ProcessAsync()
 		{
 			sLog.Write(LogLevel.Note, "Processing started...");
 
@@ -119,7 +120,7 @@ namespace GriffinPlus.PreBuildWizard
 				foreach (var processor in FileProcessorList.GetApplicableProcessors(this, path))
 				{
 					sLog.Write(LogLevel.Note, "Processing {0} using processor '{1}'...", path, processor.Name);
-					processor.Process(this, path);
+					await processor.ProcessAsync(this, path).ConfigureAwait(false);
 					sLog.Write(LogLevel.Note, "Processing {0} completed.", path);
 				}
 			}

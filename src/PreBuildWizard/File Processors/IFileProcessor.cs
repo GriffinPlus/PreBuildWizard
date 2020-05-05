@@ -12,6 +12,8 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+using System.Threading.Tasks;
+
 namespace GriffinPlus.PreBuildWizard
 {
 	/// <summary>
@@ -37,6 +39,6 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="appCore">App core that runs the file processor.</param>
 		/// <param name="path">Path of the file to process.</param>
-		void Process(AppCore appCore, string path);
+		Task ProcessAsync(AppCore appCore, string path);
 	}
 }

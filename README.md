@@ -1,6 +1,6 @@
 # Griffin+ PreBuildWizard
 
-[![Build (master)](https://img.shields.io/appveyor/ci/ravenpride/prebuildwizard/master.svg?logo=appveyor)](https://ci.appveyor.com/project/ravenpride/prebuildwizard/branch/master)
+[![Build (master)](https://dev.azure.com/griffinplus/PreBuildWizard/_apis/build/status/Continuous%20Integration?branchName=master)](https://dev.azure.com/griffinplus/PreBuildWizard/_build/latest?definitionId=28&branchName=master)
 [![Release](https://img.shields.io/github/release/griffinplus/prebuildwizard.svg?logo=github)](https://github.com/GriffinPlus/PreBuildWizard/releases)
 
 

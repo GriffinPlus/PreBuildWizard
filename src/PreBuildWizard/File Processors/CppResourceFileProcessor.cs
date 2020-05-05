@@ -17,6 +17,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace GriffinPlus.PreBuildWizard
 {
@@ -115,7 +116,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="appCore">App core that runs the file processor.</param>
 		/// <param name="path">Path of the file to process.</param>
-		public void Process(AppCore appCore, string path)
+		public async Task ProcessAsync(AppCore appCore, string path)
 		{
 			System.Text.Encoding encoding;
 			string content;
@@ -127,7 +128,7 @@ namespace GriffinPlus.PreBuildWizard
 				using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
 				using (StreamReader reader = new StreamReader(fs, true))
 				{
-					content = reader.ReadToEnd();
+					content = await reader.ReadToEndAsync().ConfigureAwait(false);
 					encoding = reader.CurrentEncoding;
 				}
 			}
@@ -218,7 +219,7 @@ namespace GriffinPlus.PreBuildWizard
 					using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
 					using (StreamWriter writer = new StreamWriter(fs, System.Text.Encoding.ASCII))
 					{
-						writer.Write(content);
+						await writer.WriteAsync(content).ConfigureAwait(false);
 					}
 				}
 				catch (Exception ex)

@@ -1,8 +1,8 @@
 ﻿///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This file is part of the Griffin+ PreBuildWizard (https://github.com/griffinplus/PreBuildWizard).
 //
-// Copyright 2019 Sascha Falk <sascha@falk-online.eu>
-// Copyright 2019 Sebastian Piel <sebastianpiel@outlook.de>
+// Copyright 2019-2020 Sascha Falk <sascha@falk-online.eu>
+// Copyright 2019      Sebastian Piel <sebastianpiel@outlook.de>
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance
 // with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -13,15 +13,13 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using GriffinPlus.Lib.Logging;
-using RazorEngine;
-using RazorEngine.Configuration;
-using RazorEngine.Templating;
-using RazorEngine.Text;
+using RazorLight;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace GriffinPlus.PreBuildWizard
 {
@@ -38,7 +36,6 @@ namespace GriffinPlus.PreBuildWizard
 		private const string ProcessorName = "PreBuildWizard Template (Razor)";
 		private const bool DebugRazor = false;
 		private static readonly Regex sFileNameRegex = new Regex(@"^.*\.pbwtempl$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly IRazorEngineService sRazorEngineText;
 
 		/// <summary>
 		/// Rendering context used by the Razor template engine.
@@ -49,18 +46,6 @@ namespace GriffinPlus.PreBuildWizard
 			/// Environment variables that can be used from within a template.
 			/// </summary>
 			public Dictionary<string,string> Env { get; } = new Dictionary<string, string>();
-		}
-
-		/// <summary>
-		/// Initializes the <see cref="TemplatedFileProcessor"/> class.
-		/// </summary>
-		static TemplatedFileProcessor()
-		{
-			var textRazorConfig = new TemplateServiceConfiguration();
-			textRazorConfig.Language = Language.CSharp;
-			textRazorConfig.EncodedStringFactory = new RawStringFactory();
-			textRazorConfig.Debug = DebugRazor;
-			sRazorEngineText = RazorEngineService.Create(textRazorConfig);
 		}
 
 		/// <summary>
@@ -96,36 +81,16 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="appCore">App core that runs the file processor.</param>
 		/// <param name="path">Path of the file to process.</param>
-		public void Process(AppCore appCore, string path)
+		public async Task ProcessAsync(AppCore appCore, string path)
 		{
 			string templateKey = path = Path.GetFullPath(path);
-			IRazorEngineService razor = sRazorEngineText;
 			System.Text.Encoding encoding;
-			string renderedText;
 
-			try
-			{
-				// compile template
-				using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-				using (StreamReader reader = new StreamReader(fs, true))
-				{
-					string template = reader.ReadToEnd();
-					encoding = reader.CurrentEncoding;
-					if (!razor.IsTemplateCached(templateKey, null))
-					{
-						ITemplateSource templateSource = new LoadedTemplateSource(template, null);
-						razor.AddTemplate(templateKey, templateSource);
-						using (TimingLogger.Measure(sLog, string.Format("Compiling {0}", path)))
-						{
-							razor.Compile(templateSource, templateKey, typeof(RenderingContext));
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				throw new FileProcessingException(ex, "Compiling template ({0}) failed.", path);
-			}
+			RazorLightEngine engine = new RazorLightEngineBuilder()
+				.UseEmbeddedResourcesProject(typeof(TemplatedFileProcessor))
+				.UseMemoryCachingProvider()
+				.DisableEncoding()
+				.Build();
 
 			// prepare rendering context
 			RenderingContext context = new RenderingContext();
@@ -134,12 +99,18 @@ namespace GriffinPlus.PreBuildWizard
 				context.Env[(string)kvp.Key] = kvp.Value.ToString();
 			}
 
+			// compile and render the template
+			string renderedTemplate;
 			try
 			{
-				// render template
-				using (TimingLogger.Measure(sLog, string.Format("Rendering {0}", path)))
+				using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+				using (StreamReader reader = new StreamReader(fs, true))
 				{
-					renderedText = razor.Run(templateKey, typeof(RenderingContext), context);
+					string template = await reader.ReadToEndAsync().ConfigureAwait(false);
+					encoding = reader.CurrentEncoding;
+					renderedTemplate = await engine
+						.CompileRenderStringAsync(templateKey, template, context)
+						.ConfigureAwait(false);
 				}
 			}
 			catch (Exception ex)
@@ -154,7 +125,7 @@ namespace GriffinPlus.PreBuildWizard
 				using (FileStream fs = new FileStream(renderedFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
 				using (StreamWriter writer = new StreamWriter(fs, encoding))
 				{
-					writer.Write(renderedText);
+					await writer.WriteAsync(renderedTemplate).ConfigureAwait(false);
 				}
 			}
 			catch (Exception ex)

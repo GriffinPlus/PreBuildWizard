@@ -16,6 +16,7 @@ using GriffinPlus.Lib.Logging;
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace GriffinPlus.PreBuildWizard
@@ -77,7 +78,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="appCore">App core that runs the file processor.</param>
 		/// <param name="path">Path of the file to process.</param>
-		public void Process(AppCore appCore, string path)
+		public Task ProcessAsync(AppCore appCore, string path)
 		{
 			XmlDocument doc = new XmlDocument();
 			doc.PreserveWhitespace = true;
@@ -107,7 +108,7 @@ namespace GriffinPlus.PreBuildWizard
 							"Project file contains <GenerateAssemblyInfo>, but the value is invalid ({0}).",
 							node.InnerText);
 
-						return;
+						return Task.CompletedTask;
 					}
 				}
 
@@ -187,8 +188,9 @@ namespace GriffinPlus.PreBuildWizard
 					}
 
 					doc.Save(path);
+
 					// processing completed...
-					return;
+					return Task.CompletedTask;
 				}
 			}
 

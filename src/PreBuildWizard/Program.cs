@@ -58,27 +58,14 @@ namespace GriffinPlus.PreBuildWizard
 
 		static int Main(string[] args)
 		{
-			// switch to second app domain to enable RazorEngine to clean up properly
-			if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-			{
-				// RazorEngine cannot clean up from the default appdomain...
-				AppDomainSetup adSetup = new AppDomainSetup();
-				adSetup.ApplicationBase = AppDomain.CurrentDomain.SetupInformation.ApplicationBase;
-				var current = AppDomain.CurrentDomain;
-
-				var domain = AppDomain.CreateDomain(
-					"MyMainDomain", null,
-					current.SetupInformation, new PermissionSet(PermissionState.Unrestricted),
-					null);
-				return domain.ExecuteAssembly(Assembly.GetExecutingAssembly().Location, args);
-			}
-
 			// configure the log
-			Log.LogMessageProcessingPipeline = new ConsoleWriterPipelineStage()
-				.WithTimestamp()
-				// .WithLogWriterName()
-				.WithLogLevel()
-				.WithText();
+			var formatter = new TableMessageFormatter();
+			formatter.AddTimestampColumn();
+			formatter.AddLogLevelColumn();
+			formatter.AddTextColumn();
+			var consoleStage = new ConsoleWriterPipelineStage();
+			consoleStage.Formatter = formatter;
+			Log.LogMessageProcessingPipeline = consoleStage;
 
 			// configure command line parser
 			CommandLine.Parser parser = new CommandLine.Parser(with =>
@@ -112,11 +99,8 @@ namespace GriffinPlus.PreBuildWizard
 			// configure the log, if more verbosity is required
 			if (options.Verbose)
 			{
-				LogConfiguration configuration = new LogConfiguration();
-				configuration.SetLogWriterSettings(
-					new LogConfiguration.LogWriter(
-						new LogConfiguration.WildcardLogWriterPattern("*"),
-						"All"));
+				VolatileLogConfiguration configuration = new VolatileLogConfiguration();
+				configuration.AddLogWriterDefault(x => x.WithBaseLevel(LogLevel.All));
 				Log.Configuration = configuration;
 			}
 
@@ -183,7 +167,7 @@ namespace GriffinPlus.PreBuildWizard
 				// process files
 				try
 				{
-					processor.Process();
+					processor.ProcessAsync().Wait();
 				}
 				catch (Exception ex)
 				{
