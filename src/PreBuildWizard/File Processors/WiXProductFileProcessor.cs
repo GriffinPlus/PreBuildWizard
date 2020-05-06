@@ -101,15 +101,15 @@ namespace GriffinPlus.PreBuildWizard
 
 			if (productNode != null)
 			{
-				if (appCore.AssemblyVersion != null)
+				if (appCore.Version != null)
 				{
 					// set product version to assembly version
 					XmlNode productVersionNode = doc.SelectSingleNode("//wix:WixVariable[@Id='ProductVersion']", nsmgr);
 					if (productVersionNode != null)
 					{
 						XmlElement element = (XmlElement)productVersionNode;
-						sLog.Write(LogLevel.Note, "Patching WiXInstaller produt version variable to '{0}'", appCore.AssemblyVersion);
-						element.SetAttribute("Value", appCore.AssemblyVersion);
+						sLog.Write(LogLevel.Note, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
+						element.SetAttribute("Value", appCore.Version);
 					}
 					else
 					{
@@ -132,29 +132,35 @@ namespace GriffinPlus.PreBuildWizard
 							upgradeCode = upgradeCode.Replace("{", "");
 							upgradeCode = upgradeCode.Replace("}", "");
 							upgradeCode = upgradeCode.Replace("-", "");
-							byte[] upgradeCodeArray = Enumerable.Range(0, upgradeCode.Length)
-																.Where(x => x % 2 == 0)
-																.Select(x => Convert.ToByte(upgradeCode.Substring(x, 2), 16))
-																.ToArray();
+							byte[] upgradeCodeArray = Enumerable
+								.Range(0, upgradeCode.Length)
+								.Where(x => x % 2 == 0)
+								.Select(x => Convert.ToByte(upgradeCode.Substring(x, 2), 16))
+								.ToArray();
+
 							// convert version number to integer where each number represents 8 bit
-							string[] versionNumbers = appCore.AssemblyVersion.Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries);
+							string[] versionNumbers = appCore.Version.Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries);
 							byte[] bVersionNumbers = new byte[versionNumbers.Length];
 							for (int i = 0; i < bVersionNumbers.Length; i++)
 							{
 								bVersionNumbers[i] = Byte.Parse(versionNumbers[i]);
 							}
+
 							// generate random byte sequence from version number
 							Random rand = new Random(BitConverter.ToInt32(bVersionNumbers, 0));
 							byte[] guid = new byte[upgradeCodeArray.Length];
 							rand.NextBytes(guid);
+
 							// xor with upgrade code to make a specific guid for each product
 							for (int i = 0; i < guid.Length; i++)
 							{
 								guid[i] = (byte)(guid[i] ^ upgradeCodeArray[i]);
 							}
+
 							// set version and variant of Guid format version 4
 							guid[6] = (byte)((guid[6] & 0x0f) + 0x40);
 							guid[8] = (byte)((guid[8] & 0x3f) + 0x80);
+
 							// convert result to hexadecimal string representation
 							StringBuilder productCodeString = new StringBuilder(BitConverter.ToString(guid).Replace("-", ""));
 							productCodeString.Append("}");
@@ -163,6 +169,7 @@ namespace GriffinPlus.PreBuildWizard
 							productCodeString.Insert(12, "-");
 							productCodeString.Insert(8, "-");
 							productCodeString.Insert(0, "{");
+
 							// write value to attribute
 							sLog.Write(LogLevel.Note, "Patching WiXInstaller product code variable to '{0}'", productCodeString.ToString());
 							productCode.SetAttribute("Value", productCodeString.ToString());
@@ -188,7 +195,7 @@ namespace GriffinPlus.PreBuildWizard
 			}
 			if (bundleNode != null)
 			{
-				if (appCore.AssemblyVersion != null)
+				if (appCore.Version != null)
 				{
 					// set product version to assembly version
 					// set product version to assembly version
@@ -196,8 +203,8 @@ namespace GriffinPlus.PreBuildWizard
 					if (productVersionNode != null)
 					{
 						XmlElement element = (XmlElement)productVersionNode;
-						sLog.Write(LogLevel.Note, "Patching WiXInstaller produt version variable to '{0}'", appCore.AssemblyVersion);
-						element.SetAttribute("Value", appCore.AssemblyVersion);
+						sLog.Write(LogLevel.Note, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
+						element.SetAttribute("Value", appCore.Version);
 					}
 					else
 					{
