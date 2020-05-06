@@ -139,7 +139,8 @@ namespace GriffinPlus.PreBuildWizard
 								.ToArray();
 
 							// convert version number to integer where each number represents 8 bit
-							string[] versionNumbers = appCore.Version.Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries);
+							string paddedVersion = appCore.Version + ".0";
+							string[] versionNumbers = paddedVersion.Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries);
 							byte[] bVersionNumbers = new byte[versionNumbers.Length];
 							for (int i = 0; i < bVersionNumbers.Length; i++)
 							{
