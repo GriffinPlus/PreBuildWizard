@@ -17,7 +17,6 @@ Import-Module "$ScriptDir\build.vs\LicenseCollector.psm1"
 [String]  $ProductName          = "PreBuildWizard"
 [String]  $SolutionPath         = "$ScriptDir\PreBuildWizard.sln"
 [String]  $LicenseTemplatePath  = "$ScriptDir\THIRD_PARTY_NOTICES.template"
-[String]  $BuildOutputPath      = "$ScriptDir\_build\PreBuildWizard"
 
 $MsbuildConfigurations = @('Debug','Release')
 $MsbuildPlatforms = @('Any CPU')
@@ -57,7 +56,7 @@ LicenseCollector `
 	-Configuration "Release" `
 	-Platform "Any CPU" `
 	-TemplatePath "$LicenseTemplatePath" `
-	-OutputPath "$ScriptDir\_build\PreBuildWizard.Any CPU.Release\THIRD_PARTY_NOTICES" `
+	-OutputPath "$ScriptDir\_build\PreBuildWizard\AnyCPU.Release\netcoreapp2.1\THIRD_PARTY_NOTICES" `
 	-PauseOnError
 
 Read-Host "Press ANY key..."

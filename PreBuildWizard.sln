@@ -9,7 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build (common)", "build (co
 	ProjectSection(SolutionItems) = preProject
 		build.vs\AssemblyInfoVersion.cs = build.vs\AssemblyInfoVersion.cs
 		build.vs\AssemblyInfoVersion.mcpp = build.vs\AssemblyInfoVersion.mcpp
-		build.vs\Build+Deploy.psm1 = build.vs\Build+Deploy.psm1
 		build.vs\Build.psm1 = build.vs\Build.psm1
 		build.vs\Clean.psm1 = build.vs\Clean.psm1
 		build.vs\Configuration.psm1 = build.vs\Configuration.psm1
@@ -51,13 +50,21 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Release|x64.ActiveCfg = Release|Any CPU
+		{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
