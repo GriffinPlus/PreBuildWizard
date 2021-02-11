@@ -56,7 +56,7 @@ LicenseCollector `
 	-Configuration "Release" `
 	-Platform "Any CPU" `
 	-TemplatePath "$LicenseTemplatePath" `
-	-OutputPath "$ScriptDir\_build\PreBuildWizard\AnyCPU.Release\netcoreapp2.1\THIRD_PARTY_NOTICES" `
+	-OutputPath "$ScriptDir\_build\PreBuildWizard\AnyCPU.Release\net5.0\THIRD_PARTY_NOTICES" `
 	-PauseOnError
 
 Read-Host "Press ANY key..."

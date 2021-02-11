@@ -2,4 +2,4 @@
 
 [assembly: AssemblyCompany("Griffin+")];
 [assembly: AssemblyProduct("Griffin+ PreBuildWizard")];
-[assembly: AssemblyCopyright("Copyright (c) Sascha Falk, Sebastian Piel 2019")];
+[assembly: AssemblyCopyright("Copyright (c) Sascha Falk, Sebastian Piel 2021")];

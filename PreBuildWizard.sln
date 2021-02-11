@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2003
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31005.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PreBuildWizard", "src\PreBuildWizard\PreBuildWizard.csproj", "{A423B3C6-1FD7-43CA-9ED5-193E9C6F2B71}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build (common)", "build (common)", "{7118AA1D-8AE4-48E5-AC2D-D954315C7E1D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build.vs", "build.vs", "{7118AA1D-8AE4-48E5-AC2D-D954315C7E1D}"
 	ProjectSection(SolutionItems) = preProject
 		build.vs\AssemblyInfoVersion.cs = build.vs\AssemblyInfoVersion.cs
 		build.vs\AssemblyInfoVersion.mcpp = build.vs\AssemblyInfoVersion.mcpp
@@ -28,12 +28,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build (common)", "build (co
 		build.vs\NuGet.msbuild = build.vs\NuGet.msbuild
 		build.vs\PackNuGet.psm1 = build.vs\PackNuGet.psm1
 		build.vs\PreBuildWizard.psm1 = build.vs\PreBuildWizard.psm1
+		build.vs\PublishNuGet.psm1 = build.vs\PublishNuGet.psm1
 		build.vs\README.md = build.vs\README.md
+		build.vs\ReSharper.DotSettings = build.vs\ReSharper.DotSettings
 		build.vs\RestoreNuGet.psm1 = build.vs\RestoreNuGet.psm1
 		build.vs\UpdateOutputFileList.psm1 = build.vs\UpdateOutputFileList.psm1
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build (repo)", "build (repo)", "{AA944ACD-A8F2-48BA-97BB-ABEEF466A793}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repository Files", "Repository Files", "{AA944ACD-A8F2-48BA-97BB-ABEEF466A793}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		azure-pipelines.yml = azure-pipelines.yml
@@ -45,6 +47,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build (repo)", "build (repo
 		README.md = README.md
 		THIRD_PARTY_NOTICES = THIRD_PARTY_NOTICES
 		THIRD_PARTY_NOTICES.template = THIRD_PARTY_NOTICES.template
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-pipelines", "azure-pipelines", "{DA5C40BA-0B19-4842-87BB-C3AE32F1A5EE}"
+	ProjectSection(SolutionItems) = preProject
+		build.vs\azure-pipelines\ci-csharp-netstandard20-with-deployment-on-tag.yml = build.vs\azure-pipelines\ci-csharp-netstandard20-with-deployment-on-tag.yml
 	EndProjectSection
 EndProject
 Global
@@ -68,6 +75,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DA5C40BA-0B19-4842-87BB-C3AE32F1A5EE} = {7118AA1D-8AE4-48E5-AC2D-D954315C7E1D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EB1302F4-3A30-40E9-AA3C-3D8FD744DC83}

@@ -63,9 +63,9 @@ namespace GriffinPlus.PreBuildWizard
 			formatter.AddTimestampColumn();
 			formatter.AddLogLevelColumn();
 			formatter.AddTextColumn();
-			var consoleStage = new ConsoleWriterPipelineStage();
+			var consoleStage = new ConsoleWriterPipelineStage("Console");
 			consoleStage.Formatter = formatter;
-			Log.LogMessageProcessingPipeline = consoleStage;
+			Log.ProcessingPipeline = consoleStage;
 
 			// configure command line parser
 			CommandLine.Parser parser = new CommandLine.Parser(with =>

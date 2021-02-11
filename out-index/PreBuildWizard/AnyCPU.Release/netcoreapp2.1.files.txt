@@ -1,7 +1,0 @@
-﻿.\PreBuildWizard.deps.json
-.\PreBuildWizard.dll
-.\PreBuildWizard.dll.config
-.\PreBuildWizard.pdb
-.\PreBuildWizard.runtimeconfig.dev.json
-.\PreBuildWizard.runtimeconfig.json
-.\PreBuildWizard.xml
