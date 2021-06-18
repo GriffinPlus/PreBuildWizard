@@ -29,7 +29,7 @@ namespace GriffinPlus.PreBuildWizard
 	{
 		private static LogWriter sLog = Log.GetWriter<AppCore>();
 		private readonly List<string> mFilesToProcess = new List<string>();
-		private readonly Dictionary<string, string> mProjectAsstesToCheck = new Dictionary<string, string>();
+		private readonly Dictionary<string, string> mProjectAssetsToCheck = new Dictionary<string, string>();
 
 		private const string cBuildFolderName = "_build";
 		private const string cObjectFolderName = ".obj";
@@ -130,7 +130,7 @@ namespace GriffinPlus.PreBuildWizard
 
 		#region Checking NuGet package consistency
 		/// <summary>
-		/// Scans the specififed path for 'project.assets.json' files under the temporary build object folder. 
+		/// Scans the specified path for 'project.assets.json' files under the temporary build object folder. 
 		/// The project.assets.json files are created by the restoration of NuGet packages. 
 		/// </summary>
 		/// <param name="directory">Path of the directory to scan.</param>
@@ -141,7 +141,7 @@ namespace GriffinPlus.PreBuildWizard
 				string projectId = Path.GetFileName(projectPath);
 				string projectAssetsPath = Path.Combine(projectPath, cProjectAssetsName);
 				if (File.Exists(projectAssetsPath))
-					mProjectAsstesToCheck.Add(projectId, projectAssetsPath);
+					mProjectAssetsToCheck.Add(projectId, projectAssetsPath);
 			}
 		}
 
@@ -154,9 +154,9 @@ namespace GriffinPlus.PreBuildWizard
 		{
 			Dictionary<string, Dictionary<string, string>> targetFrameworks = new Dictionary<string, Dictionary<string, string>>();
 
-			foreach (string projectId in mProjectAsstesToCheck.Keys)
+			foreach (string projectId in mProjectAssetsToCheck.Keys)
 			{
-				string projectAssetsPath = mProjectAsstesToCheck[projectId];
+				string projectAssetsPath = mProjectAssetsToCheck[projectId];
 				sLog.Write(LogLevel.Note, $"Checking consistency of '{projectId}'...");
 
 				using (StreamReader reader = new StreamReader(projectAssetsPath))
