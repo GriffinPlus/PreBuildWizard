@@ -11,7 +11,7 @@ pool:
 
 variables:
   solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
+  buildPlatform: 'AnyCPU'
   buildConfiguration: 'Release'
   # runtime identifiers (see https://docs.microsoft.com/en-us/dotnet/core/rid-catalog)
   targets: 'win10-x86,win10-x64'

@@ -19,7 +19,7 @@ Import-Module "$ScriptDir\build.vs\LicenseCollector.psm1"
 [String]  $LicenseTemplatePath  = "$ScriptDir\THIRD_PARTY_NOTICES.template"
 
 $MsbuildConfigurations = @('Debug','Release')
-$MsbuildPlatforms = @('Any CPU')
+$MsbuildPlatforms = @('AnyCPU')
 
 # -------------------------------------------------------------------------------------------------------------------------------------
 
@@ -54,9 +54,9 @@ Build `
 LicenseCollector `
 	-SolutionPath "$SolutionPath" `
 	-Configuration "Release" `
-	-Platform "Any CPU" `
+	-Platform "AnyCPU" `
 	-TemplatePath "$LicenseTemplatePath" `
-	-OutputPath "$ScriptDir\_build\PreBuildWizard\AnyCPU.Release\net5.0\THIRD_PARTY_NOTICES" `
+	-OutputPath "$ScriptDir\_build\.out\PreBuildWizard\AnyCPU.Release\net5.0\THIRD_PARTY_NOTICES" `
 	-PauseOnError
 
 Read-Host "Press ANY key..."
