@@ -17,20 +17,45 @@ variables:
   targets: 'win10-x86,win10-x64'
 
 steps:
-- task: GitVersion@5
+- task: UseDotNet@2
+  displayName: 'Use .NET 5.0 SDK'
   inputs:
-    runtime: 'core'
-    updateAssemblyInfo: true
-    updateAssemblyInfoFilename: build.vs\AssemblyInfoVersion.cs
-  displayName: 'Patching Version Number'
+    packageType: 'sdk'
+    version: '5.0.x'
+    installationPath: '$(Agent.ToolsDirectory)/dotnet'
 
 - task: NuGetToolInstaller@1
-  displayName: Install NuGet
-
-- task: NuGetCommand@2
-  displayName: Restore NuGet Packages
+  displayName: 'Install NuGet'
   inputs:
-    restoreSolution: '$(solution)'
+    versionSpec: '5.x'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Install GitVersion'
+  inputs:
+    command: 'custom'
+    custom: 'tool'
+    arguments: 'install -g gitversion.tool'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Show GitVersion Version'
+  inputs:
+    command: 'custom'
+    custom: 'gitversion'
+    arguments: 'version'
+
+- task: DotNetCoreCLI@2
+  name: 'GitVersion'
+  displayName: 'Run GitVersion'
+  inputs:
+    command: 'custom'
+    custom: 'gitversion'
+    arguments: '/output buildserver /updateassemblyinfo src/CommonAssemblyInfo.cs'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
 
 - powershell: |
     $env:DOTNET_CLI_TELEMETRY_OPTOUT = 'true'
