@@ -12,7 +12,6 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using GriffinPlus.Lib.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,8 +20,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using GriffinPlus.Lib.Logging;
+
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// Base class for file processors.
 	/// </summary>
@@ -36,7 +38,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// <summary>
 		/// Regular expression matching variables to expand (format: '{{ MyVar }}').
 		/// </summary>
-		protected readonly static Regex sExpandedVariableRegex = new Regex(@"{{\s*(.+?)\s*}}", RegexOptions.Compiled);
+		protected static readonly Regex sExpandedVariableRegex = new(@"{{\s*(.+?)\s*}}", RegexOptions.Compiled);
 
 		/// <summary>
 		/// List of file name patterns the file processor should process.
@@ -44,7 +46,7 @@ namespace GriffinPlus.PreBuildWizard
 		protected readonly List<Regex> mFileNamePatterns;
 
 		/// <summary>
-		/// Intializes a new instance of the <see cref="FileProcessorBase"/> class.
+		/// Initializes a new instance of the <see cref="FileProcessorBase"/> class.
 		/// </summary>
 		/// <param name="name">Name of the file processor.</param>
 		/// <param name="patterns">File name patterns the file processor is responsible for.</param>
@@ -53,8 +55,8 @@ namespace GriffinPlus.PreBuildWizard
 			mLog = LogWriter.Get(GetType()); // use more specific type, instead of FileProcessorBase
 			Name = name;
 
-			mFileNamePatterns = new List<Regex>();
-			foreach (var pattern in patterns)
+			mFileNamePatterns = new();
+			foreach (Regex pattern in patterns)
 			{
 				if (pattern != null)
 				{
@@ -66,7 +68,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// <summary>
 		/// Gets the name of the file processor.
 		/// </summary>
-		public string Name { get; private set; }
+		public string Name { get; }
 
 		/// <summary>
 		/// Determines whether the file processor is applicable on the specified file.
@@ -87,52 +89,50 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="path">Path of the file to process.</param>
 		public virtual async Task ProcessAsync(AppCore appCore, string path)
 		{
-			using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+			await using var fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+			// read file into memory
+			string data;
+			Encoding encoding;
+			mLog.Write(LogLevel.Trace, "Loading file {0}.", path);
+			using (var reader = new StreamReader(fs))
 			{
-				// read file into memory
-				string data;
-				Encoding encoding;
-				mLog.Write(LogLevel.Trace, "Loading file {0}.", path);
-				using (StreamReader reader = new StreamReader(fs))
-				{
-					data = await reader.ReadToEndAsync().ConfigureAwait(false);
-					encoding = reader.CurrentEncoding;
-				}
+				data = await reader.ReadToEndAsync().ConfigureAwait(false);
+				encoding = reader.CurrentEncoding;
+			}
 
-				// replace all occurrences of environment variables
-				bool modified = false;
-				foreach (Match match in sExpandedVariableRegex.Matches(data))
-				{
-					string variableName = match.Groups[1].Value;
-					string replacement = Environment.GetEnvironmentVariable(variableName);
+			// replace all occurrences of environment variables
+			bool modified = false;
+			foreach (Match match in sExpandedVariableRegex.Matches(data))
+			{
+				string variableName = match.Groups[1].Value;
+				string replacement = Environment.GetEnvironmentVariable(variableName);
 
-					if (replacement != null)
-					{
-						mLog.Write(LogLevel.Trace, "Replacing environment variable '{0}' with '{1}' in file {2}.", variableName, replacement, path);
-						data = sExpandedVariableRegex.Replace(data, replacement);
-						modified = true;
-					}
-					else
-					{
-						throw new FileProcessingException("Processing {0} failed, expected environment variable '{1}' is not set.", path, variableName);
-					}
-				}
-
-				// write changed file
-				if (modified)
+				if (replacement != null)
 				{
-					mLog.Write(LogLevel.Trace, "Writing file {0}.", path);
-					fs.SetLength(0);
-					using (StreamWriter writer = new StreamWriter(fs, encoding))
-					{
-						await writer.WriteAsync(data).ConfigureAwait(false);
-					}
+					mLog.Write(LogLevel.Trace, "Replacing environment variable '{0}' with '{1}' in file {2}.", variableName, replacement, path);
+					data = sExpandedVariableRegex.Replace(data, replacement);
+					modified = true;
 				}
 				else
 				{
-					mLog.Write(LogLevel.Trace, "File {0} was not modified.", path);
+					throw new FileProcessingException("Processing {0} failed, expected environment variable '{1}' is not set.", path, variableName);
 				}
+			}
+
+			// write changed file
+			if (modified)
+			{
+				mLog.Write(LogLevel.Trace, "Writing file {0}.", path);
+				fs.SetLength(0);
+				await using var writer = new StreamWriter(fs, encoding);
+				await writer.WriteAsync(data).ConfigureAwait(false);
+			}
+			else
+			{
+				mLog.Write(LogLevel.Trace, "File {0} was not modified.", path);
 			}
 		}
 	}
+
 }

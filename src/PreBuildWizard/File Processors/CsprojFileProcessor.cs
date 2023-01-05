@@ -12,7 +12,6 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using GriffinPlus.Lib.Logging;
 using System;
 using System.IO;
 using System.Text;
@@ -20,15 +19,18 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
+using GriffinPlus.Lib.Logging;
+
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// Processes .csproj files and patches version information into .NET Core and .NET Standard projects.
 	/// </summary>
 	public class CsprojFileProcessor : IFileProcessor
 	{
 		private static readonly LogWriter sLog           = LogWriter.Get<CsprojFileProcessor>();
-		private static readonly Regex     sFileNameRegex = new Regex(@"^.*\.csproj$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly Regex     sFileNameRegex = new(@"^.*\.csproj$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
 		/// Gets the name of the file processor.
@@ -46,7 +48,7 @@ namespace GriffinPlus.PreBuildWizard
 			string fileName = Path.GetFileName(path);
 			if (sFileNameRegex.IsMatch(fileName))
 			{
-				XmlDocument doc = new XmlDocument();
+				var doc = new XmlDocument();
 				doc.Load(path);
 				return IsNewCsProj(doc);
 			}
@@ -62,13 +64,15 @@ namespace GriffinPlus.PreBuildWizard
 		public Task ProcessAsync(AppCore appCore, string path)
 		{
 			// prepare a xml document to load the CSPROJ file into
-			XmlDocument doc = new XmlDocument();
-			doc.PreserveWhitespace = true;
+			var doc = new XmlDocument
+			{
+				PreserveWhitespace = true
+			};
 
 			// load CSPROJ file into the xml document
 			Encoding encoding;
-			using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-			using (StreamReader reader = new StreamReader(fs, true))
+			using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (var reader = new StreamReader(fs, true))
 			{
 				// store current encoding to use when saving as well
 				encoding = reader.CurrentEncoding;
@@ -81,11 +85,12 @@ namespace GriffinPlus.PreBuildWizard
 					// determine whether assembly info should automatically be generated out of the project file
 					// (the <GenerateAssemblyInfo> element is optional and defaults to 'true')
 					bool generateAssemblyInfo = true;
-					var node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/GenerateAssemblyInfo");
+					XmlNode node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/GenerateAssemblyInfo");
 					if (node != null)
 					{
 						if (node.InnerText == "true")
 						{
+							// ReSharper disable once RedundantAssignment
 							generateAssemblyInfo = true;
 						}
 						else if (node.InnerText == "false")
@@ -187,8 +192,8 @@ namespace GriffinPlus.PreBuildWizard
 			}
 
 			// save CSPROJ file
-			using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
-			using (StreamWriter writer = new StreamWriter(fs, encoding))
+			using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+			using (var writer = new StreamWriter(fs, encoding))
 			{
 				doc.Save(writer);
 			}
@@ -207,4 +212,5 @@ namespace GriffinPlus.PreBuildWizard
 			return node != null;
 		}
 	}
+
 }

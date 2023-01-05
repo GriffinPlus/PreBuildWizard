@@ -16,6 +16,7 @@ using System;
 
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// Exception that is thrown in case of file processing errors.
 	/// </summary>
@@ -24,19 +25,13 @@ namespace GriffinPlus.PreBuildWizard
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FileProcessingException"/> class.
 		/// </summary>
-		public FileProcessingException()
-		{
-
-		}
+		public FileProcessingException() { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FileProcessingException"/> class.
 		/// </summary>
 		/// <param name="message">Message describing the reason why the exception is thrown.</param>
-		public FileProcessingException(string message) : base(message)
-		{
-
-		}
+		public FileProcessingException(string message) : base(message) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FileProcessingException"/> class.
@@ -44,10 +39,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="format">String that is used to format the final message describing the reason why the exception is thrown.</param>
 		/// <param name="args">Arguments used to format the final exception message.</param>
 		public FileProcessingException(string format, params object[] args) :
-			base(string.Format(format, args))
-		{
-
-		}
+			base(string.Format(format, args)) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FileProcessingException"/> class.
@@ -56,19 +48,14 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="format">String that is used to format the final message describing the reason why the exception is thrown.</param>
 		/// <param name="args">Arguments used to format the final exception message.</param>
 		public FileProcessingException(Exception innerException, string format, params object[] args) :
-			base(string.Format(format, args), innerException)
-		{
-
-		}
+			base(string.Format(format, args), innerException) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FileProcessingException"/> class.
 		/// </summary>
 		/// <param name="message">Message describing the reason why the exception is thrown.</param>
 		/// <param name="ex">Some other exception that caused the exception to be thrown.</param>
-		public FileProcessingException(string message, Exception ex) : base(message, ex)
-		{
-
-		}
+		public FileProcessingException(string message, Exception ex) : base(message, ex) { }
 	}
+
 }

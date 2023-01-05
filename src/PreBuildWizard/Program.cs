@@ -34,7 +34,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// Command line argument mapping class
 		/// (see https://github.com/commandlineparser/commandline for details).
 		/// </summary>
-		class Options
+		private class Options
 		{
 			[Option('v', Default = false)]
 			public bool Verbose { get; set; }
@@ -51,27 +51,28 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		internal enum ExitCode
 		{
-			Success = 0,
+			Success       = 0,
 			ArgumentError = 1,
-			GeneralError = 2,
-			FileNotFound = 3,
+			GeneralError  = 2,
+			FileNotFound  = 3
 		}
 
-		static int Main(string[] args)
+		private static int Main(string[] args)
 		{
 			// configure command line parser
-			CommandLine.Parser parser = new CommandLine.Parser(with =>
-			{
-				with.CaseInsensitiveEnumValues = true;
-				with.CaseSensitive = false;
-				with.EnableDashDash = true;
-				with.IgnoreUnknownArguments = false;
-				with.ParsingCulture = CultureInfo.InvariantCulture;
-				with.HelpWriter = null;
-			});
+			var parser = new Parser(
+				with =>
+				{
+					with.CaseInsensitiveEnumValues = true;
+					with.CaseSensitive = false;
+					with.EnableDashDash = true;
+					with.IgnoreUnknownArguments = false;
+					with.ParsingCulture = CultureInfo.InvariantCulture;
+					with.HelpWriter = null;
+				});
 
 			// process command line
-			var exitCode = parser.ParseArguments<Options>(args)
+			int exitCode = parser.ParseArguments<Options>(args)
 				.MapResult(
 					options => (int)RunOptionsAndReturnExitCode(options),
 					errors => (int)HandleParseError(errors));
@@ -89,7 +90,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="options">Command line options.</param>
 		/// <returns>Exit code the application should return.</returns>
-		static ExitCode RunOptionsAndReturnExitCode(Options options)
+		private static ExitCode RunOptionsAndReturnExitCode(Options options)
 		{
 			// configure the log
 			Log.Initialize<VolatileLogConfiguration>(
@@ -113,12 +114,14 @@ namespace GriffinPlus.PreBuildWizard
 				});
 
 			// initialize the application core
-			AppCore processor = new AppCore();
-			processor.Version = Environment.GetEnvironmentVariable("GitVersion_MajorMinorPatch");
-			processor.AssemblyVersion = Environment.GetEnvironmentVariable("GitVersion_AssemblySemVer");
-			processor.FileVersion = Environment.GetEnvironmentVariable("GitVersion_AssemblySemFileVer");
-			processor.PackageVersion = Environment.GetEnvironmentVariable("GitVersion_NuGetVersionV2");
-			processor.InformationalVersion = Environment.GetEnvironmentVariable("GitVersion_InformationalVersion");
+			var processor = new AppCore
+			{
+				Version = Environment.GetEnvironmentVariable("GitVersion_MajorMinorPatch"),
+				AssemblyVersion = Environment.GetEnvironmentVariable("GitVersion_AssemblySemVer"),
+				FileVersion = Environment.GetEnvironmentVariable("GitVersion_AssemblySemFileVer"),
+				PackageVersion = Environment.GetEnvironmentVariable("GitVersion_NuGetVersionV2"),
+				InformationalVersion = Environment.GetEnvironmentVariable("GitVersion_InformationalVersion")
+			};
 
 			try
 			{
@@ -208,20 +211,22 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="errors">Errors detected by the command line parser.</param>
 		/// <returns>Exit code the application should return.</returns>
-		static ExitCode HandleParseError(IEnumerable<Error> errors)
+		private static ExitCode HandleParseError(IEnumerable<Error> errors)
 		{
-			if (errors.Any(x => x.Tag == ErrorType.HelpRequestedError))
+			IEnumerable<Error> errorArray = errors as Error[] ?? errors.ToArray();
+
+			if (errorArray.Any(x => x.Tag == ErrorType.HelpRequestedError))
 			{
 				PrintUsage(null, Console.Out);
 				return ExitCode.Success;
 			}
-			else if (errors.Any(x => x.Tag == ErrorType.VersionRequestedError))
+			if (errorArray.Any(x => x.Tag == ErrorType.VersionRequestedError))
 			{
 				PrintVersion(Console.Out);
 				return ExitCode.Success;
 			}
 
-			PrintUsage(errors, Console.Error);
+			PrintUsage(errorArray, Console.Error);
 			return ExitCode.ArgumentError;
 		}
 
@@ -234,19 +239,20 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		/// <param name="errors">Command line parsing errors (null, if no error occurred).</param>
 		/// <param name="writer">Text writer to use.</param>
-		static void PrintUsage(IEnumerable<Error> errors, TextWriter writer)
+		private static void PrintUsage(IEnumerable<Error> errors, TextWriter writer)
 		{
 			Version version = Assembly.GetExecutingAssembly().GetName().Version;
-			writer.WriteLine(string.Format("  PreBuildWizard v{0}", version));
+			writer.WriteLine("  PreBuildWizard v{0}", version);
 			writer.WriteLine("--------------------------------------------------------------------------------");
 
-			if (errors != null && errors.Any())
+			IEnumerable<Error> errorArray = errors as Error[] ?? errors?.ToArray();
+			if (errors != null && errorArray.Any())
 			{
 				writer.WriteLine();
 				writer.WriteLine("  ERRORS:");
 				writer.WriteLine();
 
-				foreach (Error error in errors)
+				foreach (Error error in errorArray)
 				{
 					switch (error.Tag)
 					{
@@ -279,12 +285,12 @@ namespace GriffinPlus.PreBuildWizard
 			writer.WriteLine();
 			writer.WriteLine("  USAGE:");
 			writer.WriteLine();
-			writer.WriteLine("    PreBuildWizard.exe [-v] [-b|--baseIntermediateOutputPath <bpath>] <path>");
+			writer.WriteLine("    PreBuildWizard.exe [-v] [-b|--baseIntermediateOutputPath <path>] <path>");
 			writer.WriteLine();
 			writer.WriteLine("    [-v]");
 			writer.WriteLine("      Sets output to verbose.");
 			writer.WriteLine();
-			writer.WriteLine("    [-b|--baseIntermediateOutputPath <bpath>]");
+			writer.WriteLine("    [-b|--baseIntermediateOutputPath <path>]");
 			writer.WriteLine("      BaseIntermediateOutputPath of msbuild to check for consistency of NuGet packages.");
 			writer.WriteLine();
 			writer.WriteLine("    <path>");
@@ -297,7 +303,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// Writes version information.
 		/// </summary>
 		/// <param name="writer">Text writer to use.</param>
-		static void PrintVersion(TextWriter writer)
+		private static void PrintVersion(TextWriter writer)
 		{
 			Version version = Assembly.GetExecutingAssembly().GetName().Version;
 			writer.WriteLine("PreBuildWizard v{0}", version);

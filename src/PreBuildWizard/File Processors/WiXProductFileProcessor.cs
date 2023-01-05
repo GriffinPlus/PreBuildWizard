@@ -12,7 +12,6 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using GriffinPlus.Lib.Logging;
 using System;
 using System.IO;
 using System.Linq;
@@ -21,42 +20,25 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
+using GriffinPlus.Lib.Logging;
+
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// A class that provides functionality to patch version number and product code to WiX projects.
 	/// </summary>
 	public class WiXProductFileProcessor : IFileProcessor
 	{
 		private static readonly LogWriter sLog            = LogWriter.Get<WiXProductFileProcessor>();
-		private const           string    ProcessorName   = "New WiX File";
 		private const           string    XmlWiXNamespace = "http://schemas.microsoft.com/wix/2006/wi";
-		private static readonly Regex     sFileNameRegex  = new Regex(@"^.*\.wxs$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly Regex     sGuidRegex      = new Regex(@"^[{]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[}]?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		
-		/// <summary>
-		/// Initializes the <see cref="WiXProductFileProcessor"/> class.
-		/// </summary>
-		static WiXProductFileProcessor()
-		{
-
-		}
+		private static readonly Regex     sFileNameRegex  = new(@"^.*\.wxs$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly Regex     sGuidRegex      = new(@"^[{]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[}]?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="WiXProductFileProcessor"/> class.
+		/// Gets the name of the file processor.
 		/// </summary>
-		public WiXProductFileProcessor()
-		{
-
-		}
-
-		/// <summary>
-		///  Gets the name of the file processor.
-		/// </summary>
-		public string Name
-		{
-			get { return ProcessorName; }
-		}
+		public string Name => "WiX Product File";
 
 		/// <summary>
 		/// Determines whether the file processor is applicable on the specified file.
@@ -69,13 +51,13 @@ namespace GriffinPlus.PreBuildWizard
 			string fileName = Path.GetFileName(path);
 			if (sFileNameRegex.IsMatch(fileName))
 			{
-				XmlDocument doc = new XmlDocument();
+				var doc = new XmlDocument();
 				doc.Load(path);
-				var nsmgr = new XmlNamespaceManager(doc.NameTable);
-				nsmgr.AddNamespace("wix", XmlWiXNamespace);
-				XmlNode productNode = doc.DocumentElement.SelectSingleNode("//wix:Product", nsmgr);
-				XmlNode bundleNode = doc.DocumentElement.SelectSingleNode("//wix:Bundle", nsmgr);
-				return (productNode != null || bundleNode != null);
+				var xmlNamespaceManager = new XmlNamespaceManager(doc.NameTable);
+				xmlNamespaceManager.AddNamespace("wix", XmlWiXNamespace);
+				XmlNode productNode = doc.DocumentElement?.SelectSingleNode("//wix:Product", xmlNamespaceManager);
+				XmlNode bundleNode = doc.DocumentElement?.SelectSingleNode("//wix:Bundle", xmlNamespaceManager);
+				return productNode != null || bundleNode != null;
 			}
 
 			return false;
@@ -89,25 +71,26 @@ namespace GriffinPlus.PreBuildWizard
 		public Task ProcessAsync(AppCore appCore, string path)
 		{
 			bool isCompleted = false;
-			XmlDocument doc = new XmlDocument
+			var doc = new XmlDocument
 			{
 				PreserveWhitespace = true
 			};
+
 			doc.Load(path);
-			var nsmgr = new XmlNamespaceManager(doc.NameTable);
-			nsmgr.AddNamespace("wix", XmlWiXNamespace);
-			XmlNode productNode = doc.DocumentElement.SelectSingleNode("//wix:Product", nsmgr);
-			XmlNode bundleNode = doc.DocumentElement.SelectSingleNode("//wix:Bundle", nsmgr);
+			var xmlNamespaceManager = new XmlNamespaceManager(doc.NameTable);
+			xmlNamespaceManager.AddNamespace("wix", XmlWiXNamespace);
+			XmlNode productNode = doc.DocumentElement?.SelectSingleNode("//wix:Product", xmlNamespaceManager);
+			XmlNode bundleNode = doc.DocumentElement?.SelectSingleNode("//wix:Bundle", xmlNamespaceManager);
 
 			if (productNode != null)
 			{
 				if (appCore.Version != null)
 				{
 					// set product version to assembly version
-					XmlNode productVersionNode = doc.SelectSingleNode("//wix:WixVariable[@Id='ProductVersion']", nsmgr);
+					XmlNode productVersionNode = doc.SelectSingleNode("//wix:WixVariable[@Id='ProductVersion']", xmlNamespaceManager);
 					if (productVersionNode != null)
 					{
-						XmlElement element = (XmlElement)productVersionNode;
+						var element = (XmlElement)productVersionNode;
 						sLog.Write(LogLevel.Notice, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
 						element.SetAttribute("Value", appCore.Version);
 					}
@@ -118,17 +101,17 @@ namespace GriffinPlus.PreBuildWizard
 
 					// generate Guid for installer Id:
 					// generate random byte sequence from a seed based on the assembly version
-					// XOR with the upgradecode for specific products
-					XmlNode productCodeNode = doc.SelectSingleNode("//wix:WixVariable[@Id='ProductCode']", nsmgr);
-					XmlNode upgradeCodeNode = doc.SelectSingleNode("//wix:WixVariable[@Id='UpgradeCode']", nsmgr);
+					// XOR with the upgrade code for specific products
+					XmlNode productCodeNode = doc.SelectSingleNode("//wix:WixVariable[@Id='ProductCode']", xmlNamespaceManager);
+					XmlNode upgradeCodeNode = doc.SelectSingleNode("//wix:WixVariable[@Id='UpgradeCode']", xmlNamespaceManager);
 					if (productCodeNode != null && upgradeCodeNode != null)
 					{
-						XmlElement productCode = (XmlElement)productCodeNode;
+						var productCode = (XmlElement)productCodeNode;
 						string upgradeCode = ((XmlElement)upgradeCodeNode).GetAttribute("Value");
 
 						if (sGuidRegex.IsMatch(upgradeCode))
 						{
-							// convert hexadecimal representation of upgradecode to byte array
+							// convert hexadecimal representation of upgrade code to byte array
 							upgradeCode = upgradeCode.Replace("{", "");
 							upgradeCode = upgradeCode.Replace("}", "");
 							upgradeCode = upgradeCode.Replace("-", "");
@@ -140,15 +123,15 @@ namespace GriffinPlus.PreBuildWizard
 
 							// convert version number to integer where each number represents 8 bit
 							string paddedVersion = appCore.Version + ".0";
-							string[] versionNumbers = paddedVersion.Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries);
+							string[] versionNumbers = paddedVersion.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries);
 							byte[] bVersionNumbers = new byte[versionNumbers.Length];
 							for (int i = 0; i < bVersionNumbers.Length; i++)
 							{
-								bVersionNumbers[i] = Byte.Parse(versionNumbers[i]);
+								bVersionNumbers[i] = byte.Parse(versionNumbers[i]);
 							}
 
 							// generate random byte sequence from version number
-							Random rand = new Random(BitConverter.ToInt32(bVersionNumbers, 0));
+							var rand = new Random(BitConverter.ToInt32(bVersionNumbers, 0));
 							byte[] guid = new byte[upgradeCodeArray.Length];
 							rand.NextBytes(guid);
 
@@ -163,7 +146,7 @@ namespace GriffinPlus.PreBuildWizard
 							guid[8] = (byte)((guid[8] & 0x3f) + 0x80);
 
 							// convert result to hexadecimal string representation
-							StringBuilder productCodeString = new StringBuilder(BitConverter.ToString(guid).Replace("-", ""));
+							var productCodeString = new StringBuilder(BitConverter.ToString(guid).Replace("-", ""));
 							productCodeString.Append("}");
 							productCodeString.Insert(20, "-");
 							productCodeString.Insert(16, "-");
@@ -191,6 +174,7 @@ namespace GriffinPlus.PreBuildWizard
 				}
 
 				doc.Save(path);
+
 				// processing completed...
 				isCompleted = true;
 			}
@@ -199,11 +183,10 @@ namespace GriffinPlus.PreBuildWizard
 				if (appCore.Version != null)
 				{
 					// set product version to assembly version
-					// set product version to assembly version
-					XmlNode productVersionNode = doc.SelectSingleNode("//wix:WixVariable[@Id='ProductVersion']", nsmgr);
+					XmlNode productVersionNode = doc.SelectSingleNode("//wix:WixVariable[@Id='ProductVersion']", xmlNamespaceManager);
 					if (productVersionNode != null)
 					{
-						XmlElement element = (XmlElement)productVersionNode;
+						var element = (XmlElement)productVersionNode;
 						sLog.Write(LogLevel.Notice, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
 						element.SetAttribute("Value", appCore.Version);
 					}
@@ -218,6 +201,7 @@ namespace GriffinPlus.PreBuildWizard
 				}
 
 				doc.Save(path);
+
 				// processing completed...
 				isCompleted = true;
 			}
@@ -232,4 +216,5 @@ namespace GriffinPlus.PreBuildWizard
 			throw new NotSupportedException("The file format is not supported.");
 		}
 	}
+
 }

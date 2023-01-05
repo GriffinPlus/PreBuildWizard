@@ -12,75 +12,58 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using GriffinPlus.Lib.Logging;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using GriffinPlus.Lib.Logging;
+
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// Processes .rc files and patches product version and file version information.
 	/// </summary>
 	public class CppResourceFileProcessor : IFileProcessor
 	{
 		private static readonly LogWriter sLog           = LogWriter.Get<CppResourceFileProcessor>();
-		private const           string    ProcessorName  = "C/C++ Resource";
-		private static readonly Regex     sFileNameRegex = new Regex(@"^.*\.rc$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly Regex     sFileNameRegex = new(@"^.*\.rc$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		private static readonly Regex sContainsVersionInfoRegex = new Regex(
+		private static readonly Regex sContainsVersionInfoRegex = new(
 			@"^\s*VS_VERSION_INFO\s+VERSIONINFO.*$",
 			RegexOptions.Compiled | RegexOptions.Multiline);
 
 		private const string VersionInfo_ValueRegexFormat = @"(?<=^\s*{0}\s+)(\d,\d,\d,\d)(?=.*\r?$)"; // matches the version string only!
 
-		private static readonly Regex sVersionInfo_FileVersionRegex = new Regex(
+		private static readonly Regex sVersionInfo_FileVersionRegex = new(
 			string.Format(VersionInfo_ValueRegexFormat, "FILEVERSION"),
 			RegexOptions.Compiled | RegexOptions.Multiline);
 
-		private static readonly Regex sVersionInfo_ProductVersionRegex = new Regex(
+		private static readonly Regex sVersionInfo_ProductVersionRegex = new(
 			string.Format(VersionInfo_ValueRegexFormat, "PRODUCTVERSION"),
 			RegexOptions.Compiled | RegexOptions.Multiline);
 
 		private const string StringInfo_ValueRegexFormat = @"(?<=^\s*VALUE\s+""{0}\""\s*,\s*\"")(.*)(?="".*\r?$)"; // matches the version string only!
 
-		private static readonly Regex sStringFileInfo_FileVersionRegex = new Regex(
+		private static readonly Regex sStringFileInfo_FileVersionRegex = new(
 			string.Format(StringInfo_ValueRegexFormat, "FileVersion"),
 			RegexOptions.Compiled | RegexOptions.Multiline);
 
-		private static readonly Regex sStringFileInfo_ProductVersionRegex = new Regex(
+		private static readonly Regex sStringFileInfo_ProductVersionRegex = new(
 			string.Format(StringInfo_ValueRegexFormat, "ProductVersion"),
 			RegexOptions.Compiled | RegexOptions.Multiline);
 
-		private static readonly Regex sStringInfo_CommentsRegex = new Regex(
+		private static readonly Regex sStringInfo_CommentsRegex = new(
 			string.Format(StringInfo_ValueRegexFormat, "Comments"),
 			RegexOptions.Compiled | RegexOptions.Multiline);
 
 		/// <summary>
-		/// Initializes the <see cref="CppResourceFileProcessor"/> class.
-		/// </summary>
-		static CppResourceFileProcessor()
-		{
-
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="CppResourceFileProcessor"/> class.
-		/// </summary>
-		public CppResourceFileProcessor()
-		{
-
-		}
-
-		/// <summary>
 		/// Gets the name of the file processor.
 		/// </summary>
-		public string Name
-		{
-			get { return ProcessorName; }
-		}
+		public string Name => "C/C++ Resource";
 
 		/// <summary>
 		/// Determines whether the file processor is applicable on the specified file.
@@ -93,22 +76,15 @@ namespace GriffinPlus.PreBuildWizard
 			string fileName = Path.GetFileName(path);
 
 			// check whether the filename extension is ok
-			if (!sFileNameRegex.IsMatch(fileName)) {
+			if (!sFileNameRegex.IsMatch(fileName))
 				return false;
-			}
 
 			// check whether the resource file contains a VERSIONINFO block to skip resource files
 			// that contain other stuff...
-			using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-			using (StreamReader reader = new StreamReader(fs, true))
-			{
-				string content = reader.ReadToEnd();
-				if (!sContainsVersionInfoRegex.IsMatch(content)) {
-					return false;
-				}
-			}
-
-			return true;
+			using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+			using var reader = new StreamReader(fs, true);
+			string content = reader.ReadToEnd();
+			return sContainsVersionInfoRegex.IsMatch(content);
 		}
 
 		/// <summary>
@@ -118,19 +94,17 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="path">Path of the file to process.</param>
 		public async Task ProcessAsync(AppCore appCore, string path)
 		{
-			System.Text.Encoding encoding;
+			Encoding encoding;
 			string content;
 			bool modified = false;
 
 			try
 			{
 				// replace occurrences of version strings
-				using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-				using (StreamReader reader = new StreamReader(fs, true))
-				{
-					content = await reader.ReadToEndAsync().ConfigureAwait(false);
-					encoding = reader.CurrentEncoding;
-				}
+				await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+				using var reader = new StreamReader(fs, true);
+				content = await reader.ReadToEndAsync().ConfigureAwait(false);
+				encoding = reader.CurrentEncoding;
 			}
 			catch (Exception ex)
 			{
@@ -206,7 +180,7 @@ namespace GriffinPlus.PreBuildWizard
 
 			if (modified)
 			{
-				if (encoding != System.Text.Encoding.ASCII)
+				if (ReferenceEquals(encoding, Encoding.ASCII))
 				{
 					sLog.Write(
 						LogLevel.Warning,
@@ -216,11 +190,9 @@ namespace GriffinPlus.PreBuildWizard
 
 				try
 				{
-					using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
-					using (StreamWriter writer = new StreamWriter(fs, System.Text.Encoding.ASCII))
-					{
-						await writer.WriteAsync(content).ConfigureAwait(false);
-					}
+					await using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+					await using var writer = new StreamWriter(fs, Encoding.ASCII);
+					await writer.WriteAsync(content).ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{
@@ -228,6 +200,6 @@ namespace GriffinPlus.PreBuildWizard
 				}
 			}
 		}
-
 	}
+
 }

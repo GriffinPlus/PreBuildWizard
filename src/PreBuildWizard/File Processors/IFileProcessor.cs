@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// Interface for file processors.
 	/// </summary>
@@ -41,4 +42,5 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="path">Path of the file to process.</param>
 		Task ProcessAsync(AppCore appCore, string path);
 	}
+
 }

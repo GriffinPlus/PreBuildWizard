@@ -12,17 +12,22 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using GriffinPlus.Lib.Logging;
-using RazorLight;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using GriffinPlus.Lib.Logging;
+
+using RazorLight;
+
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// Processes '.pbwtempl' files by interpreting them as Razor templates.
 	/// A file 'MyFile.ext.pbwtempl' is rendered and the result is written to 'MyFile.ext'.
@@ -32,10 +37,9 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class TemplatedFileProcessor : IFileProcessor
 	{
-		private static LogWriter sLog = LogWriter.Get<TemplatedFileProcessor>();
-		private const string ProcessorName = "PreBuildWizard Template (Razor)";
-		private const bool DebugRazor = false;
-		private static readonly Regex sFileNameRegex = new Regex(@"^.*\.pbwtempl$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static          LogWriter sLog           = LogWriter.Get<TemplatedFileProcessor>();
+		private const           bool      DebugRazor     = false;
+		private static readonly Regex     sFileNameRegex = new(@"^.*\.pbwtempl$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
 		/// Rendering context used by the Razor template engine.
@@ -45,24 +49,13 @@ namespace GriffinPlus.PreBuildWizard
 			/// <summary>
 			/// Environment variables that can be used from within a template.
 			/// </summary>
-			public Dictionary<string,string> Env { get; } = new Dictionary<string, string>();
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="TemplatedFileProcessor"/> class.
-		/// </summary>
-		public TemplatedFileProcessor()
-		{
-
+			public Dictionary<string, string> Env { get; } = new();
 		}
 
 		/// <summary>
 		/// Gets the name of the file processor.
 		/// </summary>
-		public string Name
-		{
-			get { return ProcessorName; }
-		}
+		public string Name => "PreBuildWizard Template (Razor)";
 
 		/// <summary>
 		/// Determines whether the file processor is applicable on the specified file.
@@ -84,7 +77,7 @@ namespace GriffinPlus.PreBuildWizard
 		public async Task ProcessAsync(AppCore appCore, string path)
 		{
 			string templateKey = path = Path.GetFullPath(path);
-			System.Text.Encoding encoding;
+			Encoding encoding;
 
 			RazorLightEngine engine = new RazorLightEngineBuilder()
 				.UseEmbeddedResourcesProject(typeof(TemplatedFileProcessor))
@@ -93,25 +86,23 @@ namespace GriffinPlus.PreBuildWizard
 				.Build();
 
 			// prepare rendering context
-			RenderingContext context = new RenderingContext();
+			var context = new RenderingContext();
 			foreach (DictionaryEntry kvp in Environment.GetEnvironmentVariables())
 			{
-				context.Env[(string)kvp.Key] = kvp.Value.ToString();
+				context.Env[(string)kvp.Key] = kvp.Value?.ToString();
 			}
 
 			// compile and render the template
 			string renderedTemplate;
 			try
 			{
-				using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-				using (StreamReader reader = new StreamReader(fs, true))
-				{
-					string template = await reader.ReadToEndAsync().ConfigureAwait(false);
-					encoding = reader.CurrentEncoding;
-					renderedTemplate = await engine
-						.CompileRenderStringAsync(templateKey, template, context)
-						.ConfigureAwait(false);
-				}
+				await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+				using var reader = new StreamReader(fs, true);
+				string template = await reader.ReadToEndAsync().ConfigureAwait(false);
+				encoding = reader.CurrentEncoding;
+				renderedTemplate = await engine
+					                   .CompileRenderStringAsync(templateKey, template, context)
+					                   .ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{
@@ -121,12 +112,13 @@ namespace GriffinPlus.PreBuildWizard
 			// write rendered file
 			try
 			{
-				string renderedFilePath = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path));
-				using (FileStream fs = new FileStream(renderedFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
-				using (StreamWriter writer = new StreamWriter(fs, encoding))
-				{
-					await writer.WriteAsync(renderedTemplate).ConfigureAwait(false);
-				}
+				string directoryName = Path.GetDirectoryName(path);
+				string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
+				Debug.Assert(directoryName != null);
+				string renderedFilePath = Path.Combine(directoryName, fileNameWithoutExtension);
+				await using var fs = new FileStream(renderedFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+				await using var writer = new StreamWriter(fs, encoding);
+				await writer.WriteAsync(renderedTemplate).ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{
@@ -134,4 +126,5 @@ namespace GriffinPlus.PreBuildWizard
 			}
 		}
 	}
+
 }

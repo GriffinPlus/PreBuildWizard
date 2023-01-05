@@ -12,60 +12,43 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using GriffinPlus.Lib.Logging;
 using System;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using GriffinPlus.Lib.Logging;
+
 namespace GriffinPlus.PreBuildWizard
 {
+
 	/// <summary>
 	/// Processes AssemblyInfo.cs files and patches version information specified in these files.
 	/// </summary>
 	public class AssemblyInfoFileProcessor : IFileProcessor
 	{
 		private static readonly LogWriter sLog           = LogWriter.Get<AssemblyInfoFileProcessor>();
-		private const           string    ProcessorName  = "Assembly Info";
-		private static readonly Regex     sFileNameRegex = new Regex(@"^(.*AssemblyInfo.*)\.(cs|cpp|mcpp)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly Regex     sFileNameRegex = new(@"^(.*AssemblyInfo.*)\.(cs|cpp|mcpp)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		private const string versionRegexFormat = @"(?<=\[\s*assembly\s*:\s*{0}(?:Attribute)?\s*\(\s*"")(.*)(?=""\s*\)\s*\])"; // matches the version string only!
 
-		private static readonly Regex sAssemblyVersionRegex = new Regex(
+		private static readonly Regex sAssemblyVersionRegex = new(
 			string.Format(versionRegexFormat, "AssemblyVersion"),
 			RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		private static readonly Regex sAssemblyFileVersionRegex = new Regex(
+		private static readonly Regex sAssemblyFileVersionRegex = new(
 			string.Format(versionRegexFormat, "AssemblyFileVersion"),
 			RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		private static readonly Regex sAssemblyInformationalVersionRegex = new Regex(
+		private static readonly Regex sAssemblyInformationalVersionRegex = new(
 			string.Format(versionRegexFormat, "AssemblyInformationalVersion"),
 			RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
-		/// Initializes the <see cref="AssemblyInfoFileProcessor"/> class.
-		/// </summary>
-		static AssemblyInfoFileProcessor()
-		{
-
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="AssemblyInfoFileProcessor"/> class.
-		/// </summary>
-		public AssemblyInfoFileProcessor()
-		{
-
-		}
-
-		/// <summary>
 		/// Gets the name of the file processor.
 		/// </summary>
-		public string Name
-		{
-			get { return ProcessorName; }
-		}
+		public string Name => "Assembly Info";
 
 		/// <summary>
 		/// Determines whether the file processor is applicable on the specified file.
@@ -76,12 +59,7 @@ namespace GriffinPlus.PreBuildWizard
 		public bool IsApplicable(AppCore appCore, string path)
 		{
 			string fileName = Path.GetFileName(path);
-			if (sFileNameRegex.IsMatch(fileName))
-			{
-				return true;
-			}
-
-			return false;
+			return sFileNameRegex.IsMatch(fileName);
 		}
 
 		/// <summary>
@@ -91,26 +69,24 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="path">Path of the file to process.</param>
 		public async Task ProcessAsync(AppCore appCore, string path)
 		{
-			System.Text.Encoding encoding;
+			Encoding encoding;
 			string content;
 			bool modified = false;
 
 			try
 			{
 				// replace occurrences of version strings
-				using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-				using (StreamReader reader = new StreamReader(fs, true))
-				{
-					content = await reader.ReadToEndAsync().ConfigureAwait(false);
-					encoding = reader.CurrentEncoding;
-				}
+				await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+				using var reader = new StreamReader(fs, true);
+				content = await reader.ReadToEndAsync().ConfigureAwait(false);
+				encoding = reader.CurrentEncoding;
 			}
 			catch (Exception ex)
 			{
 				throw new FileProcessingException(ex, "Loading file ({0}) failed.", path);
 			}
 
-			// replace occurences of version strings
+			// replace occurrences of version strings
 
 			// AssemblyVersion
 			if (appCore.AssemblyVersion != null)
@@ -152,19 +128,16 @@ namespace GriffinPlus.PreBuildWizard
 			{
 				try
 				{
-					using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
-					using (StreamWriter writer = new StreamWriter(fs, encoding))
-					{
-						await writer.WriteAsync(content).ConfigureAwait(false);
-					}
+					await using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+					await using var writer = new StreamWriter(fs, encoding);
+					await writer.WriteAsync(content).ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{
 					throw new FileProcessingException(ex, "Saving file ({0}) failed.", path);
 				}
 			}
-
 		}
-
 	}
+
 }

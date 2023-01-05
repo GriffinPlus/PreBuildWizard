@@ -12,23 +12,23 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using System;
 using System.Collections.Generic;
 
 namespace GriffinPlus.PreBuildWizard
 {
-	internal static class FileProcessorList 
+
+	static class FileProcessorList
 	{
 		/// <summary>
 		/// All available file processors.
 		/// </summary>
-		private static IFileProcessor[] sFileProcessors = new IFileProcessor[]
+		private static readonly IFileProcessor[] sFileProcessors =
 		{
 			new TemplatedFileProcessor(),
 			new CsprojFileProcessor(),
 			new AssemblyInfoFileProcessor(),
 			new CppResourceFileProcessor(),
-			new WiXProductFileProcessor(),
+			new WiXProductFileProcessor()
 		};
 
 		/// <summary>
@@ -39,11 +39,12 @@ namespace GriffinPlus.PreBuildWizard
 		/// <returns></returns>
 		public static IEnumerable<IFileProcessor> GetApplicableProcessors(AppCore appCore, string path)
 		{
-			foreach (var processor in sFileProcessors) {
-				if (processor.IsApplicable(appCore, path)) {
+			foreach (IFileProcessor processor in sFileProcessors)
+			{
+				if (processor.IsApplicable(appCore, path))
 					yield return processor;
-				}
 			}
 		}
 	}
+
 }
