@@ -1,5 +1,7 @@
 ﻿.\CommandLine.dll
+.\GriffinPlus.Lib.Common.dll
 .\GriffinPlus.Lib.Logging.dll
+.\GriffinPlus.Lib.Logging.Interface.dll
 .\Microsoft.AspNetCore.Mvc.Razor.Extensions.dll
 .\Microsoft.AspNetCore.Razor.Language.dll
 .\Microsoft.CodeAnalysis.CSharp.dll
@@ -16,6 +18,7 @@
 .\PreBuildWizard.runtimeconfig.json
 .\PreBuildWizard.xml
 .\RazorLight.dll
+.\System.Diagnostics.EventLog.dll
 .\cs\Microsoft.CodeAnalysis.CSharp.resources.dll
 .\cs\Microsoft.CodeAnalysis.resources.dll
 .\de\Microsoft.CodeAnalysis.CSharp.resources.dll
@@ -185,7 +188,6 @@
 .\refs\System.Diagnostics.Contracts.dll
 .\refs\System.Diagnostics.Debug.dll
 .\refs\System.Diagnostics.DiagnosticSource.dll
-.\refs\System.Diagnostics.EventLog.dll
 .\refs\System.Diagnostics.FileVersionInfo.dll
 .\refs\System.Diagnostics.Process.dll
 .\refs\System.Diagnostics.StackTrace.dll
@@ -319,6 +321,8 @@
 .\refs\WindowsBase.dll
 .\ru\Microsoft.CodeAnalysis.CSharp.resources.dll
 .\ru\Microsoft.CodeAnalysis.resources.dll
+.\runtimes\win\lib\netcoreapp3.1\System.Diagnostics.EventLog.dll
+.\runtimes\win\lib\netcoreapp3.1\System.Diagnostics.EventLog.Messages.dll
 .\tr\Microsoft.CodeAnalysis.CSharp.resources.dll
 .\tr\Microsoft.CodeAnalysis.resources.dll
 .\zh-Hans\Microsoft.CodeAnalysis.CSharp.resources.dll
