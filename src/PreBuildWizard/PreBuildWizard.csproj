@@ -14,7 +14,7 @@
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="GriffinPlus.Lib.Logging" Version="5.1.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="RazorLight" Version="2.0.0-beta7" />
+    <PackageReference Include="RazorLight" Version="2.3.0" />
   </ItemGroup>
 
 </Project>
