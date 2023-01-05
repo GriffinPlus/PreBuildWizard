@@ -27,9 +27,9 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class AppCore
 	{
-		private static LogWriter sLog = Log.GetWriter<AppCore>();
-		private readonly List<string> mFilesToProcess = new List<string>();
-		private readonly Dictionary<string, string> mProjectAssetsToCheck = new Dictionary<string, string>();
+		private static readonly LogWriter                  sLog                  = LogWriter.Get<AppCore>();
+		private readonly        List<string>               mFilesToProcess       = new List<string>();
+		private readonly        Dictionary<string, string> mProjectAssetsToCheck = new Dictionary<string, string>();
 
 		private const string cBuildFolderName = "_build";
 		private const string cObjectFolderName = ".obj";
@@ -76,7 +76,7 @@ namespace GriffinPlus.PreBuildWizard
 		public void AddFile(string path)
 		{
 			string fullFilePath = Path.GetFullPath(path);
-			sLog.Write(LogLevel.Trace0, "Checking {0}...", fullFilePath);
+			sLog.Write(LogLevel.Trace, "Checking {0}...", fullFilePath);
 
 			var processors = FileProcessorList.GetApplicableProcessors(this, fullFilePath).ToArray();
 			if (processors.Length == 0) {
@@ -84,7 +84,7 @@ namespace GriffinPlus.PreBuildWizard
 			}
 
 			foreach (var processor in processors) {
-				sLog.Write(LogLevel.Note, "Found applicable processor '{0}' for {1}.", processor.Name, fullFilePath);
+				sLog.Write(LogLevel.Notice, "Found applicable processor '{0}' for {1}.", processor.Name, fullFilePath);
 			}
 
 			mFilesToProcess.Add(fullFilePath);
@@ -99,10 +99,10 @@ namespace GriffinPlus.PreBuildWizard
 			foreach (string filePath in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories))
 			{
 				string fullFilePath = Path.GetFullPath(filePath);
-				sLog.Write(LogLevel.Trace0, "Checking {0}...", fullFilePath);
+				sLog.Write(LogLevel.Trace, "Checking {0}...", fullFilePath);
 				foreach (var processor in FileProcessorList.GetApplicableProcessors(this, fullFilePath))
 				{
-					sLog.Write(LogLevel.Note, "Found applicable processor '{0}' for {1}.", processor.Name, fullFilePath);
+					sLog.Write(LogLevel.Notice, "Found applicable processor '{0}' for {1}.", processor.Name, fullFilePath);
 					mFilesToProcess.Add(fullFilePath);
 				}
 			}
@@ -113,19 +113,19 @@ namespace GriffinPlus.PreBuildWizard
 		/// </summary>
 		public async Task ProcessAsync()
 		{
-			sLog.Write(LogLevel.Note, "Processing started...");
+			sLog.Write(LogLevel.Notice, "Processing started...");
 
 			foreach (string path in mFilesToProcess)
 			{
 				foreach (var processor in FileProcessorList.GetApplicableProcessors(this, path))
 				{
-					sLog.Write(LogLevel.Note, "Processing {0} using processor '{1}'...", path, processor.Name);
+					sLog.Write(LogLevel.Notice, "Processing {0} using processor '{1}'...", path, processor.Name);
 					await processor.ProcessAsync(this, path).ConfigureAwait(false);
-					sLog.Write(LogLevel.Note, "Processing {0} completed.", path);
+					sLog.Write(LogLevel.Notice, "Processing {0} completed.", path);
 				}
 			}
 
-			sLog.Write(LogLevel.Note, "Processing completed.");
+			sLog.Write(LogLevel.Notice, "Processing completed.");
 		}
 
 		#region Checking NuGet package consistency
@@ -157,7 +157,7 @@ namespace GriffinPlus.PreBuildWizard
 			foreach (string projectId in mProjectAssetsToCheck.Keys)
 			{
 				string projectAssetsPath = mProjectAssetsToCheck[projectId];
-				sLog.Write(LogLevel.Note, $"Checking consistency of '{projectId}'...");
+				sLog.Write(LogLevel.Notice, $"Checking consistency of '{projectId}'...");
 
 				using (StreamReader reader = new StreamReader(projectAssetsPath))
 				{
@@ -176,7 +176,7 @@ namespace GriffinPlus.PreBuildWizard
 								// skip if target contains platform information, assuming the packages are identical for each platform and it exists a string without platform information
 								if (targetFrameworkVersion.Length > 1)
 								{
-									sLog.Write(LogLevel.Note, "Skipping target '{0}'", (target as JProperty).Name);
+									sLog.Write(LogLevel.Notice, "Skipping target '{0}'", (target as JProperty).Name);
 									continue;
 								}
 								if (!targetFrameworks.ContainsKey(targetFrameworkVersion[0]))
@@ -208,15 +208,15 @@ namespace GriffinPlus.PreBuildWizard
 										}
 										else
 											nuGetPackagesWithVersion.Add(package, version);
-										sLog.Write(LogLevel.Note, $"{targetFrameworkVersion[0],-30} : {package,-50} : {version,10}");
+										sLog.Write(LogLevel.Notice, $"{targetFrameworkVersion[0],-30} : {package,-50} : {version,10}");
 									}
 								}
 							}
 						}
 					}
 				}
-				sLog.Write(LogLevel.Note, $"'{projectId}' is consistent...");
-				sLog.Write(LogLevel.Note, "");
+				sLog.Write(LogLevel.Notice, $"'{projectId}' is consistent...");
+				sLog.Write(LogLevel.Notice, "");
 			}
 		}
 		#endregion

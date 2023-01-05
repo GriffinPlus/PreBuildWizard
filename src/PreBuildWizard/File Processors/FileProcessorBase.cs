@@ -50,7 +50,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="patterns">File name patterns the file processor is responsible for.</param>
 		protected FileProcessorBase(string name, params Regex[] patterns)
 		{
-			mLog = Log.GetWriter(GetType()); // use more specific type, instead of FileProcessorBase
+			mLog = LogWriter.Get(GetType()); // use more specific type, instead of FileProcessorBase
 			Name = name;
 
 			mFileNamePatterns = new List<Regex>();
@@ -92,7 +92,7 @@ namespace GriffinPlus.PreBuildWizard
 				// read file into memory
 				string data;
 				Encoding encoding;
-				mLog.Write(LogLevel.Trace0, "Loading file {0}.", path);
+				mLog.Write(LogLevel.Trace, "Loading file {0}.", path);
 				using (StreamReader reader = new StreamReader(fs))
 				{
 					data = await reader.ReadToEndAsync().ConfigureAwait(false);
@@ -108,7 +108,7 @@ namespace GriffinPlus.PreBuildWizard
 
 					if (replacement != null)
 					{
-						mLog.Write(LogLevel.Trace0, "Replacing environment variable '{0}' with '{1}' in file {2}.", variableName, replacement, path);
+						mLog.Write(LogLevel.Trace, "Replacing environment variable '{0}' with '{1}' in file {2}.", variableName, replacement, path);
 						data = sExpandedVariableRegex.Replace(data, replacement);
 						modified = true;
 					}
@@ -121,7 +121,7 @@ namespace GriffinPlus.PreBuildWizard
 				// write changed file
 				if (modified)
 				{
-					mLog.Write(LogLevel.Trace0, "Writing file {0}.", path);
+					mLog.Write(LogLevel.Trace, "Writing file {0}.", path);
 					fs.SetLength(0);
 					using (StreamWriter writer = new StreamWriter(fs, encoding))
 					{
@@ -130,7 +130,7 @@ namespace GriffinPlus.PreBuildWizard
 				}
 				else
 				{
-					mLog.Write(LogLevel.Trace0, "File {0} was not modified.", path);
+					mLog.Write(LogLevel.Trace, "File {0} was not modified.", path);
 				}
 			}
 		}

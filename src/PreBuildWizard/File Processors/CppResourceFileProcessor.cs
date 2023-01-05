@@ -26,9 +26,9 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class CppResourceFileProcessor : IFileProcessor
 	{
-		private static LogWriter sLog = Log.GetWriter<CppResourceFileProcessor>();
-		private const string ProcessorName = "C/C++ Resource";
-		private static readonly Regex sFileNameRegex = new Regex(@"^.*\.rc$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly LogWriter sLog           = LogWriter.Get<CppResourceFileProcessor>();
+		private const           string    ProcessorName  = "C/C++ Resource";
+		private static readonly Regex     sFileNameRegex = new Regex(@"^.*\.rc$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		private static readonly Regex sContainsVersionInfoRegex = new Regex(
 			@"^\s*VS_VERSION_INFO\s+VERSIONINFO.*$",
@@ -146,7 +146,7 @@ namespace GriffinPlus.PreBuildWizard
 				if (sVersionInfo_FileVersionRegex.IsMatch(content))
 				{
 					string version = string.Join(",", appCore.FileVersion.Split('.').Select(x => x.Trim()));
-					sLog.Write(LogLevel.Note, "Patching VERSIONINFO field 'FILEVERSION' to '{0}'.", version);
+					sLog.Write(LogLevel.Notice, "Patching VERSIONINFO field 'FILEVERSION' to '{0}'.", version);
 					content = sVersionInfo_FileVersionRegex.Replace(content, version);
 					modified = true;
 				}
@@ -158,7 +158,7 @@ namespace GriffinPlus.PreBuildWizard
 				// StringFileInfo: FileVersion
 				if (sStringFileInfo_FileVersionRegex.IsMatch(content))
 				{
-					sLog.Write(LogLevel.Note, "Patching StringFileInfo field 'FileVersion' to '{0}'.", appCore.FileVersion);
+					sLog.Write(LogLevel.Notice, "Patching StringFileInfo field 'FileVersion' to '{0}'.", appCore.FileVersion);
 					content = sStringFileInfo_FileVersionRegex.Replace(content, appCore.FileVersion);
 					modified = true;
 				}
@@ -177,7 +177,7 @@ namespace GriffinPlus.PreBuildWizard
 				{
 					// split up version number
 					string version = string.Join(",", appCore.AssemblyVersion.Split('.').Select(x => x.Trim()));
-					sLog.Write(LogLevel.Note, "Patching VERSIONINFO field 'PRODUCTVERSION' to '{0}'.", version);
+					sLog.Write(LogLevel.Notice, "Patching VERSIONINFO field 'PRODUCTVERSION' to '{0}'.", version);
 					content = sVersionInfo_ProductVersionRegex.Replace(content, version);
 					modified = true;
 				}
@@ -194,7 +194,7 @@ namespace GriffinPlus.PreBuildWizard
 				// StringFileInfo: ProductVersion
 				if (sStringFileInfo_ProductVersionRegex.IsMatch(content))
 				{
-					sLog.Write(LogLevel.Note, "Patching StringFileInfo field 'ProductVersion' to '{0}'.", appCore.InformationalVersion);
+					sLog.Write(LogLevel.Notice, "Patching StringFileInfo field 'ProductVersion' to '{0}'.", appCore.InformationalVersion);
 					content = sStringFileInfo_ProductVersionRegex.Replace(content, appCore.InformationalVersion);
 					modified = true;
 				}

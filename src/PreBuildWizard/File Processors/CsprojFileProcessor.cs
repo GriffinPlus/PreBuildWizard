@@ -27,7 +27,7 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class CsprojFileProcessor : IFileProcessor
 	{
-		private static readonly LogWriter sLog           = Log.GetWriter<CsprojFileProcessor>();
+		private static readonly LogWriter sLog           = LogWriter.Get<CsprojFileProcessor>();
 		private static readonly Regex     sFileNameRegex = new Regex(@"^.*\.csproj$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
@@ -105,14 +105,14 @@ namespace GriffinPlus.PreBuildWizard
 
 					if (generateAssemblyInfo)
 					{
-						sLog.Write(LogLevel.Note, "Project is configured to generate assembly information automatically.");
+						sLog.Write(LogLevel.Notice, "Project is configured to generate assembly information automatically.");
 
 						if (appCore.Version != null)
 						{
 							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/Version");
 							if (node != null)
 							{
-								sLog.Write(LogLevel.Note, "Patching <Version> element to '{0}'.", appCore.Version);
+								sLog.Write(LogLevel.Notice, "Patching <Version> element to '{0}'.", appCore.Version);
 								node.InnerText = appCore.Version;
 							}
 							else
@@ -126,7 +126,7 @@ namespace GriffinPlus.PreBuildWizard
 							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/AssemblyVersion");
 							if (node != null)
 							{
-								sLog.Write(LogLevel.Note, "Patching <AssemblyVersion> element to '{0}'.", appCore.AssemblyVersion);
+								sLog.Write(LogLevel.Notice, "Patching <AssemblyVersion> element to '{0}'.", appCore.AssemblyVersion);
 								node.InnerText = appCore.AssemblyVersion;
 							}
 							else
@@ -140,7 +140,7 @@ namespace GriffinPlus.PreBuildWizard
 							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/FileVersion");
 							if (node != null)
 							{
-								sLog.Write(LogLevel.Note, "Patching <FileVersion> element to '{0}'.", appCore.FileVersion);
+								sLog.Write(LogLevel.Notice, "Patching <FileVersion> element to '{0}'.", appCore.FileVersion);
 								node.InnerText = appCore.FileVersion;
 							}
 							else
@@ -154,13 +154,13 @@ namespace GriffinPlus.PreBuildWizard
 							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/PackageVersion");
 							if (node != null)
 							{
-								sLog.Write(LogLevel.Note, "Patching <PackageVersion> element to '{0}'.", appCore.PackageVersion);
+								sLog.Write(LogLevel.Notice, "Patching <PackageVersion> element to '{0}'.", appCore.PackageVersion);
 								node.InnerText = appCore.PackageVersion;
 							}
 							else
 							{
 								// <PackageVersion> not present, ok for libraries that are not shipped as Nuget packages
-								sLog.Write(LogLevel.Note, "Project file does not contain the <PackageVersion> to patch.");
+								sLog.Write(LogLevel.Notice, "Project file does not contain the <PackageVersion> to patch.");
 							}
 						}
 
@@ -169,7 +169,7 @@ namespace GriffinPlus.PreBuildWizard
 							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/InformationalVersion");
 							if (node != null)
 							{
-								sLog.Write(LogLevel.Note, "Patching <InformationalVersion> element to '{0}'.", appCore.InformationalVersion);
+								sLog.Write(LogLevel.Notice, "Patching <InformationalVersion> element to '{0}'.", appCore.InformationalVersion);
 								node.InnerText = appCore.InformationalVersion;
 							}
 							else

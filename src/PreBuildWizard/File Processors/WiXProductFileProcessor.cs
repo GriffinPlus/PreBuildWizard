@@ -28,11 +28,11 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class WiXProductFileProcessor : IFileProcessor
 	{
-		private static LogWriter sLog = Log.GetWriter<WiXProductFileProcessor>();
-		private const string ProcessorName = "New WiX File";
-		private const string XmlWiXNamespace = "http://schemas.microsoft.com/wix/2006/wi";
-		private static readonly Regex sFileNameRegex = new Regex(@"^.*\.wxs$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly Regex sGuidRegex = new Regex(@"^[{]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[}]?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly LogWriter sLog            = LogWriter.Get<WiXProductFileProcessor>();
+		private const           string    ProcessorName   = "New WiX File";
+		private const           string    XmlWiXNamespace = "http://schemas.microsoft.com/wix/2006/wi";
+		private static readonly Regex     sFileNameRegex  = new Regex(@"^.*\.wxs$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly Regex     sGuidRegex      = new Regex(@"^[{]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[}]?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		
 		/// <summary>
 		/// Initializes the <see cref="WiXProductFileProcessor"/> class.
@@ -108,7 +108,7 @@ namespace GriffinPlus.PreBuildWizard
 					if (productVersionNode != null)
 					{
 						XmlElement element = (XmlElement)productVersionNode;
-						sLog.Write(LogLevel.Note, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
+						sLog.Write(LogLevel.Notice, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
 						element.SetAttribute("Value", appCore.Version);
 					}
 					else
@@ -172,7 +172,7 @@ namespace GriffinPlus.PreBuildWizard
 							productCodeString.Insert(0, "{");
 
 							// write value to attribute
-							sLog.Write(LogLevel.Note, "Patching WiXInstaller product code variable to '{0}'", productCodeString.ToString());
+							sLog.Write(LogLevel.Notice, "Patching WiXInstaller product code variable to '{0}'", productCodeString.ToString());
 							productCode.SetAttribute("Value", productCodeString.ToString());
 						}
 						else
@@ -204,7 +204,7 @@ namespace GriffinPlus.PreBuildWizard
 					if (productVersionNode != null)
 					{
 						XmlElement element = (XmlElement)productVersionNode;
-						sLog.Write(LogLevel.Note, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
+						sLog.Write(LogLevel.Notice, "Patching WiXInstaller product version variable to '{0}'", appCore.Version);
 						element.SetAttribute("Value", appCore.Version);
 					}
 					else

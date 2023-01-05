@@ -25,9 +25,9 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class AssemblyInfoFileProcessor : IFileProcessor
 	{
-		private static LogWriter sLog = Log.GetWriter<AssemblyInfoFileProcessor>();
-		private const string ProcessorName = "Assembly Info";
-		private static readonly Regex sFileNameRegex = new Regex(@"^(.*AssemblyInfo.*)\.(cs|cpp|mcpp)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly LogWriter sLog           = LogWriter.Get<AssemblyInfoFileProcessor>();
+		private const           string    ProcessorName  = "Assembly Info";
+		private static readonly Regex     sFileNameRegex = new Regex(@"^(.*AssemblyInfo.*)\.(cs|cpp|mcpp)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		private const string versionRegexFormat = @"(?<=\[\s*assembly\s*:\s*{0}(?:Attribute)?\s*\(\s*"")(.*)(?=""\s*\)\s*\])"; // matches the version string only!
 
@@ -118,7 +118,7 @@ namespace GriffinPlus.PreBuildWizard
 				Match match = sAssemblyVersionRegex.Match(content);
 				if (match.Success)
 				{
-					sLog.Write(LogLevel.Note, "Patching [AssemblyVersion] attribute to '{0}'.", appCore.AssemblyVersion);
+					sLog.Write(LogLevel.Notice, "Patching [AssemblyVersion] attribute to '{0}'.", appCore.AssemblyVersion);
 					content = sAssemblyVersionRegex.Replace(content, appCore.AssemblyVersion);
 					modified = true;
 				}
@@ -130,7 +130,7 @@ namespace GriffinPlus.PreBuildWizard
 				Match match = sAssemblyFileVersionRegex.Match(content);
 				if (match.Success)
 				{
-					sLog.Write(LogLevel.Note, "Patching [AssemblyFileVersion] attribute to '{0}'.", appCore.FileVersion);
+					sLog.Write(LogLevel.Notice, "Patching [AssemblyFileVersion] attribute to '{0}'.", appCore.FileVersion);
 					content = sAssemblyFileVersionRegex.Replace(content, appCore.FileVersion);
 					modified = true;
 				}
@@ -142,7 +142,7 @@ namespace GriffinPlus.PreBuildWizard
 				Match match = sAssemblyInformationalVersionRegex.Match(content);
 				if (match.Success)
 				{
-					sLog.Write(LogLevel.Note, "Patching [AssemblyInformationalVersion] attribute to '{0}'.", appCore.InformationalVersion);
+					sLog.Write(LogLevel.Notice, "Patching [AssemblyInformationalVersion] attribute to '{0}'.", appCore.InformationalVersion);
 					content = sAssemblyInformationalVersionRegex.Replace(content, appCore.InformationalVersion);
 					modified = true;
 				}

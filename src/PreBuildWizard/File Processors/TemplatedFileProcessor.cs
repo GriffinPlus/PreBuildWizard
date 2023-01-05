@@ -32,7 +32,7 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class TemplatedFileProcessor : IFileProcessor
 	{
-		private static LogWriter sLog = Log.GetWriter<TemplatedFileProcessor>();
+		private static LogWriter sLog = LogWriter.Get<TemplatedFileProcessor>();
 		private const string ProcessorName = "PreBuildWizard Template (Razor)";
 		private const bool DebugRazor = false;
 		private static readonly Regex sFileNameRegex = new Regex(@"^.*\.pbwtempl$", RegexOptions.Compiled | RegexOptions.IgnoreCase);

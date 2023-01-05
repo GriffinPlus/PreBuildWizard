@@ -12,22 +12,23 @@
 // the specific language governing permissions and limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using CommandLine;
-using GriffinPlus.Lib.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security;
-using System.Security.Permissions;
+
+using CommandLine;
+
+using GriffinPlus.Lib.Logging;
 
 namespace GriffinPlus.PreBuildWizard
 {
+
 	class Program
 	{
-		private static LogWriter sLog = Log.GetWriter<Program>();
+		private static readonly LogWriter sLog = LogWriter.Get<Program>();
 
 		/// <summary>
 		/// Command line argument mapping class
@@ -58,15 +59,6 @@ namespace GriffinPlus.PreBuildWizard
 
 		static int Main(string[] args)
 		{
-			// configure the log
-			var formatter = new TableMessageFormatter();
-			formatter.AddTimestampColumn();
-			formatter.AddLogLevelColumn();
-			formatter.AddTextColumn();
-			var consoleStage = new ConsoleWriterPipelineStage("Console");
-			consoleStage.Formatter = formatter;
-			Log.ProcessingPipeline = consoleStage;
-
 			// configure command line parser
 			CommandLine.Parser parser = new CommandLine.Parser(with =>
 			{
@@ -84,6 +76,9 @@ namespace GriffinPlus.PreBuildWizard
 					options => (int)RunOptionsAndReturnExitCode(options),
 					errors => (int)HandleParseError(errors));
 
+			// shut down the logging subsystem
+			Log.Shutdown();
+
 			return exitCode;
 		}
 
@@ -96,13 +91,26 @@ namespace GriffinPlus.PreBuildWizard
 		/// <returns>Exit code the application should return.</returns>
 		static ExitCode RunOptionsAndReturnExitCode(Options options)
 		{
-			// configure the log, if more verbosity is required
-			if (options.Verbose)
-			{
-				VolatileLogConfiguration configuration = new VolatileLogConfiguration();
-				configuration.AddLogWriterDefault(x => x.WithBaseLevel(LogLevel.All));
-				Log.Configuration = configuration;
-			}
+			// configure the log
+			Log.Initialize<VolatileLogConfiguration>(
+				builder =>
+				{
+					builder.AddLogWriterDefault(x => x.WithBaseLevel(options.Verbose ? LogLevel.All : LogLevel.Notice));
+				},
+				builder =>
+				{
+					builder.Add<ConsoleWriterPipelineStage>(
+						"Console",
+						stage =>
+						{
+							var formatter = new TableMessageFormatter();
+							formatter.AddTimestampColumn();
+							formatter.AddLogLevelColumn();
+							formatter.AddTextColumn();
+
+							stage.Formatter = formatter;
+						});
+				});
 
 			// initialize the application core
 			AppCore processor = new AppCore();
@@ -119,7 +127,7 @@ namespace GriffinPlus.PreBuildWizard
 				{
 					if (Directory.Exists(path))
 					{
-						sLog.Write(LogLevel.Note, "The specified path ({0}) is a directory. Scanning for files to process...", path);
+						sLog.Write(LogLevel.Notice, "The specified path ({0}) is a directory. Scanning for files to process...", path);
 
 						try
 						{
@@ -137,7 +145,7 @@ namespace GriffinPlus.PreBuildWizard
 					}
 					else
 					{
-						sLog.Write(LogLevel.Note, "The specified file or directory ({0}) does not exist.", path);
+						sLog.Write(LogLevel.Notice, "The specified file or directory ({0}) does not exist.", path);
 						return ExitCode.FileNotFound;
 					}
 				}
@@ -159,7 +167,7 @@ namespace GriffinPlus.PreBuildWizard
 					}
 					else
 					{
-						sLog.Write(LogLevel.Note, "The specified directory ({0}) does not exist.", options.BaseIntermediateOutputPath);
+						sLog.Write(LogLevel.Notice, "The specified directory ({0}) does not exist.", options.BaseIntermediateOutputPath);
 						return ExitCode.ArgumentError;
 					}
 				}
@@ -296,6 +304,6 @@ namespace GriffinPlus.PreBuildWizard
 		}
 
 		#endregion
-
 	}
+
 }
