@@ -34,7 +34,6 @@
 .\pl\Microsoft.CodeAnalysis.resources.dll
 .\pt-BR\Microsoft.CodeAnalysis.CSharp.resources.dll
 .\pt-BR\Microsoft.CodeAnalysis.resources.dll
-.\ref\PreBuildWizard.dll
 .\refs\Microsoft.AspNetCore.Antiforgery.dll
 .\refs\Microsoft.AspNetCore.Authentication.Abstractions.dll
 .\refs\Microsoft.AspNetCore.Authentication.Cookies.dll
