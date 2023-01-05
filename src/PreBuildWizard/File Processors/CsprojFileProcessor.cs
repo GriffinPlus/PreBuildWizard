@@ -15,6 +15,7 @@
 using GriffinPlus.Lib.Logging;
 using System;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -26,33 +27,13 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class CsprojFileProcessor : IFileProcessor
 	{
-		private static LogWriter sLog = Log.GetWriter<CsprojFileProcessor>();
-		private const string ProcessorName = "New C# Project";
-		private static readonly Regex sFileNameRegex = new Regex(@"^.*\.csproj$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-		/// <summary>
-		/// Initializes the <see cref="CsprojFileProcessor"/> class.
-		/// </summary>
-		static CsprojFileProcessor()
-		{
-
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="CsprojFileProcessor"/> class.
-		/// </summary>
-		public CsprojFileProcessor()
-		{
-
-		}
+		private static readonly LogWriter sLog           = Log.GetWriter<CsprojFileProcessor>();
+		private static readonly Regex     sFileNameRegex = new Regex(@"^.*\.csproj$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
 		/// Gets the name of the file processor.
 		/// </summary>
-		public string Name
-		{
-			get { return ProcessorName; }
-		}
+		public string Name => "C# Project (SDK style)";
 
 		/// <summary>
 		/// Determines whether the file processor is applicable on the specified file.
@@ -80,122 +61,139 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="path">Path of the file to process.</param>
 		public Task ProcessAsync(AppCore appCore, string path)
 		{
+			// prepare a xml document to load the CSPROJ file into
 			XmlDocument doc = new XmlDocument();
 			doc.PreserveWhitespace = true;
-			doc.Load(path);
-			XmlNode node;
 
-			if (IsNewCsProj(doc))
+			// load CSPROJ file into the xml document
+			Encoding encoding;
+			using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (StreamReader reader = new StreamReader(fs, true))
 			{
-				// determine whether assembly info should automatically be generated out of the project file
-				// (the <GenerateAssemblyInfo> element is optional and defaults to 'true')
-				bool generateAssemblyInfo = true;
-				node = doc.DocumentElement.SelectSingleNode("/Project/PropertyGroup/GenerateAssemblyInfo");
-				if (node != null)
-				{
-					if (node.InnerText == "true")
-					{
-						generateAssemblyInfo = true;
-					}
-					else if (node.InnerText == "false")
-					{
-						generateAssemblyInfo = false;
-					}
-					else
-					{
-						sLog.Write(
-							LogLevel.Error,
-							"Project file contains <GenerateAssemblyInfo>, but the value is invalid ({0}).",
-							node.InnerText);
+				// store current encoding to use when saving as well
+				encoding = reader.CurrentEncoding;
 
-						return Task.CompletedTask;
+				// load CSPROJ into a xml document
+				doc.Load(reader);
+
+				if (IsNewCsProj(doc))
+				{
+					// determine whether assembly info should automatically be generated out of the project file
+					// (the <GenerateAssemblyInfo> element is optional and defaults to 'true')
+					bool generateAssemblyInfo = true;
+					var node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/GenerateAssemblyInfo");
+					if (node != null)
+					{
+						if (node.InnerText == "true")
+						{
+							generateAssemblyInfo = true;
+						}
+						else if (node.InnerText == "false")
+						{
+							generateAssemblyInfo = false;
+						}
+						else
+						{
+							sLog.Write(
+								LogLevel.Error,
+								"Project file contains <GenerateAssemblyInfo>, but the value is invalid ({0}).",
+								node.InnerText);
+
+							return Task.CompletedTask;
+						}
+					}
+
+					if (generateAssemblyInfo)
+					{
+						sLog.Write(LogLevel.Note, "Project is configured to generate assembly information automatically.");
+
+						if (appCore.Version != null)
+						{
+							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/Version");
+							if (node != null)
+							{
+								sLog.Write(LogLevel.Note, "Patching <Version> element to '{0}'.", appCore.Version);
+								node.InnerText = appCore.Version;
+							}
+							else
+							{
+								sLog.Write(LogLevel.Warning, "Project file does not contain the <Version> to patch.");
+							}
+						}
+
+						if (appCore.AssemblyVersion != null)
+						{
+							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/AssemblyVersion");
+							if (node != null)
+							{
+								sLog.Write(LogLevel.Note, "Patching <AssemblyVersion> element to '{0}'.", appCore.AssemblyVersion);
+								node.InnerText = appCore.AssemblyVersion;
+							}
+							else
+							{
+								sLog.Write(LogLevel.Warning, "Project file does not contain the <AssemblyVersion> to patch.");
+							}
+						}
+
+						if (appCore.FileVersion != null)
+						{
+							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/FileVersion");
+							if (node != null)
+							{
+								sLog.Write(LogLevel.Note, "Patching <FileVersion> element to '{0}'.", appCore.FileVersion);
+								node.InnerText = appCore.FileVersion;
+							}
+							else
+							{
+								sLog.Write(LogLevel.Warning, "Project file does not contain the <FileVersion> to patch.");
+							}
+						}
+
+						if (appCore.PackageVersion != null)
+						{
+							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/PackageVersion");
+							if (node != null)
+							{
+								sLog.Write(LogLevel.Note, "Patching <PackageVersion> element to '{0}'.", appCore.PackageVersion);
+								node.InnerText = appCore.PackageVersion;
+							}
+							else
+							{
+								// <PackageVersion> not present, ok for libraries that are not shipped as Nuget packages
+								sLog.Write(LogLevel.Note, "Project file does not contain the <PackageVersion> to patch.");
+							}
+						}
+
+						if (appCore.InformationalVersion != null)
+						{
+							node = doc.DocumentElement?.SelectSingleNode("/Project/PropertyGroup/InformationalVersion");
+							if (node != null)
+							{
+								sLog.Write(LogLevel.Note, "Patching <InformationalVersion> element to '{0}'.", appCore.InformationalVersion);
+								node.InnerText = appCore.InformationalVersion;
+							}
+							else
+							{
+								sLog.Write(LogLevel.Warning, "Project file does not contain the <InformationalVersion> to patch.");
+							}
+						}
 					}
 				}
-
-				if (generateAssemblyInfo)
+				else
 				{
-					sLog.Write(LogLevel.Note, "Project is configured to generate assembly information automatically.");
-
-					if (appCore.Version != null)
-					{
-						node = doc.DocumentElement.SelectSingleNode("/Project/PropertyGroup/Version");
-						if (node != null)
-						{
-							sLog.Write(LogLevel.Note, "Patching <Version> element to '{0}'.", appCore.Version);
-							node.InnerText = appCore.Version;
-						}
-						else
-						{
-							sLog.Write(LogLevel.Warning, "Project file does not contain the <Version> to patch.");
-						}
-					}
-
-					if (appCore.AssemblyVersion != null)
-					{
-						node = doc.DocumentElement.SelectSingleNode("/Project/PropertyGroup/AssemblyVersion");
-						if (node != null)
-						{
-							sLog.Write(LogLevel.Note, "Patching <AssemblyVersion> element to '{0}'.", appCore.AssemblyVersion);
-							node.InnerText = appCore.AssemblyVersion;
-						}
-						else
-						{
-							sLog.Write(LogLevel.Warning, "Project file does not contain the <AssemblyVersion> to patch.");
-						}
-					}
-
-					if (appCore.FileVersion != null)
-					{
-						node = doc.DocumentElement.SelectSingleNode("/Project/PropertyGroup/FileVersion");
-						if (node != null)
-						{
-							sLog.Write(LogLevel.Note, "Patching <FileVersion> element to '{0}'.", appCore.FileVersion);
-							node.InnerText = appCore.FileVersion;
-						}
-						else
-						{
-							sLog.Write(LogLevel.Warning, "Project file does not contain the <FileVersion> to patch.");
-						}
-					}
-
-					if (appCore.PackageVersion != null)
-					{
-						node = doc.DocumentElement.SelectSingleNode("/Project/PropertyGroup/PackageVersion");
-						if (node != null)
-						{
-							sLog.Write(LogLevel.Note, "Patching <PackageVersion> element to '{0}'.", appCore.PackageVersion);
-							node.InnerText = appCore.PackageVersion;
-						}
-						else
-						{
-							// <PackageVersion> not present, ok for libraries that are not shipped as Nuget packages
-							sLog.Write(LogLevel.Note, "Project file does not contain the <PackageVersion> to patch.");
-						}
-					}
-
-					if (appCore.InformationalVersion != null)
-					{
-						node = doc.DocumentElement.SelectSingleNode("/Project/PropertyGroup/InformationalVersion");
-						if (node != null)
-						{
-							sLog.Write(LogLevel.Note, "Patching <InformationalVersion> element to '{0}'.", appCore.InformationalVersion);
-							node.InnerText = appCore.InformationalVersion;
-						}
-						else
-						{
-							sLog.Write(LogLevel.Warning, "Project file does not contain the <InformationalVersion> to patch.");
-						}
-					}
-
-					doc.Save(path);
-
-					// processing completed...
-					return Task.CompletedTask;
+					// should never get here...
+					throw new NotSupportedException("The file format is not supported.");
 				}
 			}
 
-			// should never get here...
-			throw new NotSupportedException("The file format is not supported.");
+			// save CSPROJ file
+			using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+			using (StreamWriter writer = new StreamWriter(fs, encoding))
+			{
+				doc.Save(writer);
+			}
+
+			return Task.CompletedTask;
 		}
 
 		/// <summary>
@@ -205,7 +203,7 @@ namespace GriffinPlus.PreBuildWizard
 		/// <returns>true, if the specified document is a new .csproj file; otherwise false.</returns>
 		private static bool IsNewCsProj(XmlDocument doc)
 		{
-			XmlNode node = doc.DocumentElement.SelectSingleNode("/Project[@Sdk='Microsoft.NET.Sdk']");
+			XmlNode node = doc.DocumentElement?.SelectSingleNode("/Project[@Sdk='Microsoft.NET.Sdk']");
 			return node != null;
 		}
 	}
