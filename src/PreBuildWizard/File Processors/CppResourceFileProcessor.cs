@@ -180,7 +180,7 @@ namespace GriffinPlus.PreBuildWizard
 
 			if (modified)
 			{
-				if (ReferenceEquals(encoding, Encoding.ASCII))
+				if (!ReferenceEquals(encoding, Encoding.ASCII))
 				{
 					sLog.Write(
 						LogLevel.Warning,
