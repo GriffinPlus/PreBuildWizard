@@ -89,48 +89,50 @@ namespace GriffinPlus.PreBuildWizard
 		/// <param name="path">Path of the file to process.</param>
 		public virtual async Task ProcessAsync(AppCore appCore, string path)
 		{
-			await using var fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-
-			// read file into memory
-			string data;
-			Encoding encoding;
-			mLog.Write(LogLevel.Trace, "Loading file {0}.", path);
-			using (var reader = new StreamReader(fs))
+			var fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			await using (fs.ConfigureAwait(false))
 			{
-				data = await reader.ReadToEndAsync().ConfigureAwait(false);
-				encoding = reader.CurrentEncoding;
-			}
-
-			// replace all occurrences of environment variables
-			bool modified = false;
-			foreach (Match match in sExpandedVariableRegex.Matches(data))
-			{
-				string variableName = match.Groups[1].Value;
-				string replacement = Environment.GetEnvironmentVariable(variableName);
-
-				if (replacement != null)
+				// read file into memory
+				string data;
+				Encoding encoding;
+				mLog.Write(LogLevel.Trace, "Loading file {0}.", path);
+				using (var reader = new StreamReader(fs))
 				{
-					mLog.Write(LogLevel.Trace, "Replacing environment variable '{0}' with '{1}' in file {2}.", variableName, replacement, path);
-					data = sExpandedVariableRegex.Replace(data, replacement);
-					modified = true;
+					data = await reader.ReadToEndAsync().ConfigureAwait(false);
+					encoding = reader.CurrentEncoding;
+				}
+
+				// replace all occurrences of environment variables
+				bool modified = false;
+				foreach (Match match in sExpandedVariableRegex.Matches(data))
+				{
+					string variableName = match.Groups[1].Value;
+					string replacement = Environment.GetEnvironmentVariable(variableName);
+
+					if (replacement != null)
+					{
+						mLog.Write(LogLevel.Trace, "Replacing environment variable '{0}' with '{1}' in file {2}.", variableName, replacement, path);
+						data = sExpandedVariableRegex.Replace(data, replacement);
+						modified = true;
+					}
+					else
+					{
+						throw new FileProcessingException("Processing {0} failed, expected environment variable '{1}' is not set.", path, variableName);
+					}
+				}
+
+				// write changed file
+				if (modified)
+				{
+					mLog.Write(LogLevel.Trace, "Writing file {0}.", path);
+					fs.SetLength(0);
+					await using var writer = new StreamWriter(fs, encoding);
+					await writer.WriteAsync(data).ConfigureAwait(false);
 				}
 				else
 				{
-					throw new FileProcessingException("Processing {0} failed, expected environment variable '{1}' is not set.", path, variableName);
+					mLog.Write(LogLevel.Trace, "File {0} was not modified.", path);
 				}
-			}
-
-			// write changed file
-			if (modified)
-			{
-				mLog.Write(LogLevel.Trace, "Writing file {0}.", path);
-				fs.SetLength(0);
-				await using var writer = new StreamWriter(fs, encoding);
-				await writer.WriteAsync(data).ConfigureAwait(false);
-			}
-			else
-			{
-				mLog.Write(LogLevel.Trace, "File {0} was not modified.", path);
 			}
 		}
 	}

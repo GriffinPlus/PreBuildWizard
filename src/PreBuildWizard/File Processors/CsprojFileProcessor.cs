@@ -65,9 +65,11 @@ namespace GriffinPlus.PreBuildWizard
 		{
 			// detect encoding of the file
 			Encoding encoding;
-			await using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+			var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+			await using (fs.ConfigureAwait(false))
 			using (var reader = new StreamReader(fs, true))
 			{
+				await reader.ReadToEndAsync().ConfigureAwait(false);
 				encoding = reader.CurrentEncoding;
 			}
 
@@ -190,7 +192,8 @@ namespace GriffinPlus.PreBuildWizard
 			doc.Save(path);
 
 			// change the encoding of the file to the initial encoding
-			await using (var fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+			fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+			await using (fs.ConfigureAwait(false))
 			{
 				string content;
 				using (var reader = new StreamReader(fs, null, true, -1, true))

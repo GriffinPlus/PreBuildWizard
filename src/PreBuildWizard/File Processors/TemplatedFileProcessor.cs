@@ -96,13 +96,16 @@ namespace GriffinPlus.PreBuildWizard
 			string renderedTemplate;
 			try
 			{
-				await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-				using var reader = new StreamReader(fs, true);
-				string template = await reader.ReadToEndAsync().ConfigureAwait(false);
-				encoding = reader.CurrentEncoding;
-				renderedTemplate = await engine
-					                   .CompileRenderStringAsync(templateKey, template, context)
-					                   .ConfigureAwait(false);
+				var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+				await using (fs.ConfigureAwait(false))
+				using (var reader = new StreamReader(fs, true))
+				{
+					string template = await reader.ReadToEndAsync().ConfigureAwait(false);
+					encoding = reader.CurrentEncoding;
+					renderedTemplate = await engine
+						                   .CompileRenderStringAsync(templateKey, template, context)
+						                   .ConfigureAwait(false);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -116,9 +119,12 @@ namespace GriffinPlus.PreBuildWizard
 				string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
 				Debug.Assert(directoryName != null);
 				string renderedFilePath = Path.Combine(directoryName, fileNameWithoutExtension);
-				await using var fs = new FileStream(renderedFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-				await using var writer = new StreamWriter(fs, encoding);
-				await writer.WriteAsync(renderedTemplate).ConfigureAwait(false);
+				var fs = new FileStream(renderedFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+				await using (fs.ConfigureAwait(false))
+				await using (var writer = new StreamWriter(fs, encoding))
+				{
+					await writer.WriteAsync(renderedTemplate).ConfigureAwait(false);
+				}
 			}
 			catch (Exception ex)
 			{

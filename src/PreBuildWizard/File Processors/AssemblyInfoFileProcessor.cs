@@ -76,10 +76,13 @@ namespace GriffinPlus.PreBuildWizard
 			try
 			{
 				// replace occurrences of version strings
-				await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-				using var reader = new StreamReader(fs, true);
-				content = await reader.ReadToEndAsync().ConfigureAwait(false);
-				encoding = reader.CurrentEncoding;
+				var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+				await using (fs.ConfigureAwait(false))
+				using (var reader = new StreamReader(fs, true))
+				{
+					content = await reader.ReadToEndAsync().ConfigureAwait(false);
+					encoding = reader.CurrentEncoding;
+				}
 			}
 			catch (Exception ex)
 			{
@@ -128,9 +131,15 @@ namespace GriffinPlus.PreBuildWizard
 			{
 				try
 				{
-					await using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
-					await using var writer = new StreamWriter(fs, encoding);
-					await writer.WriteAsync(content).ConfigureAwait(false);
+					var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+					await using (fs.ConfigureAwait(false))
+					{
+						var writer = new StreamWriter(fs, encoding);
+						await using (writer.ConfigureAwait(false))
+						{
+							await writer.WriteAsync(content).ConfigureAwait(false);
+						}
+					}
 				}
 				catch (Exception ex)
 				{
