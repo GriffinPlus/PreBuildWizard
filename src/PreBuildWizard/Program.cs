@@ -18,9 +18,11 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 using CommandLine;
 
+using GriffinPlus.Lib;
 using GriffinPlus.Lib.Logging;
 
 namespace GriffinPlus.PreBuildWizard
@@ -41,6 +43,9 @@ namespace GriffinPlus.PreBuildWizard
 
 			[Option('b', "baseIntermediateOutputPath")]
 			public string BaseIntermediateOutputPath { get; set; }
+
+			[Option("skipNugetConsistencyCheckPattern")]
+			public IEnumerable<string> SkipNugetConsistencyCheckPatterns { get; set; }
 
 			[Value(0, Min = 1)]
 			public IEnumerable<string> Paths { get; set; }
@@ -153,6 +158,24 @@ namespace GriffinPlus.PreBuildWizard
 					}
 				}
 
+				// convert patterns to match names of projects to skip in the nuget package consistency scan
+				var skipProjectNameRegexes = new List<Regex>();
+				if (options.SkipNugetConsistencyCheckPatterns != null)
+				{
+					foreach (string pattern in options.SkipNugetConsistencyCheckPatterns)
+					{
+						try
+						{
+							skipProjectNameRegexes.Add(RegexHelpers.FromWildcardExpression(pattern, RegexOptions.Singleline));
+						}
+						catch (Exception ex)
+						{
+							sLog.Write(LogLevel.Notice, "The specified pattern ({0}) is malformed. Expecting a wildcard pattern.", pattern);
+							return ExitCode.ArgumentError;
+						}
+					}
+				}
+
 				// scan for NuGet project assets when option is set
 				if (!string.IsNullOrEmpty(options.BaseIntermediateOutputPath))
 				{
@@ -160,7 +183,7 @@ namespace GriffinPlus.PreBuildWizard
 					{
 						try
 						{
-							processor.ScanNugetProjectAssets(options.BaseIntermediateOutputPath);
+							processor.ScanNugetProjectAssets(options.BaseIntermediateOutputPath, skipProjectNameRegexes);
 						}
 						catch (Exception ex)
 						{
@@ -285,7 +308,7 @@ namespace GriffinPlus.PreBuildWizard
 			writer.WriteLine();
 			writer.WriteLine("  USAGE:");
 			writer.WriteLine();
-			writer.WriteLine("    PreBuildWizard.exe [-v] [-b|--baseIntermediateOutputPath <path>] <path>");
+			writer.WriteLine("    PreBuildWizard.exe [-v] [-b|--baseIntermediateOutputPath <path>] [--skipNugetConsistencyCheckPattern <pattern>] <path>");
 			writer.WriteLine();
 			writer.WriteLine("    [-v]");
 			writer.WriteLine("      Sets output to verbose.");
@@ -293,8 +316,11 @@ namespace GriffinPlus.PreBuildWizard
 			writer.WriteLine("    [-b|--baseIntermediateOutputPath <path>]");
 			writer.WriteLine("      BaseIntermediateOutputPath of msbuild to check for consistency of NuGet packages.");
 			writer.WriteLine();
+			writer.WriteLine("    [--skipNugetConsistencyCheckPattern <pattern>]");
+			writer.WriteLine("      Wildcard pattern of projects to skip when checking the consistency of NuGet packages.");
+			writer.WriteLine();
 			writer.WriteLine("    <path>");
-			writer.WriteLine("      One or more paths were files to patch can be found.");
+			writer.WriteLine("      One or more paths where files to patch can be found.");
 			writer.WriteLine();
 			writer.WriteLine("--------------------------------------------------------------------------------");
 		}

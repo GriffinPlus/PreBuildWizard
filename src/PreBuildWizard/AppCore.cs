@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using GriffinPlus.Lib.Logging;
@@ -132,14 +133,18 @@ namespace GriffinPlus.PreBuildWizard
 		/// The project.assets.json files are created by the restoration of NuGet packages.
 		/// </summary>
 		/// <param name="directory">Path of the directory to scan.</param>
-		public void ScanNugetProjectAssets(string directory)
+		/// <param name="projectNamesToSkipRegexes">Regular expressions matching names of projects to skip.</param>
+		public void ScanNugetProjectAssets(string directory, IEnumerable<Regex> projectNamesToSkipRegexes)
 		{
+			IEnumerable<Regex> regexes = projectNamesToSkipRegexes as Regex[] ?? projectNamesToSkipRegexes.ToArray();
 			foreach (string projectPath in Directory.GetDirectories(directory))
 			{
 				string projectId = Path.GetFileName(projectPath);
 				string projectAssetsPath = Path.Combine(projectPath, cProjectAssetsName);
-				if (File.Exists(projectAssetsPath))
+				if (File.Exists(projectAssetsPath) && !regexes.Any(x => x.IsMatch(projectId)))
+				{
 					mProjectAssetsToCheck.Add(projectId, projectAssetsPath);
+				}
 			}
 		}
 
