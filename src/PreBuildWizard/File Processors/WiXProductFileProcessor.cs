@@ -30,15 +30,16 @@ namespace GriffinPlus.PreBuildWizard
 	/// </summary>
 	public class WiXProductFileProcessor : IFileProcessor
 	{
-		private static readonly LogWriter sLog            = LogWriter.Get<WiXProductFileProcessor>();
-		private const           string    XmlWiXNamespace = "http://schemas.microsoft.com/wix/2006/wi";
-		private static readonly Regex     sFileNameRegex  = new(@"^.*\.wxs$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly Regex     sGuidRegex      = new(@"^[{]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[}]?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly LogWriter sLog              = LogWriter.Get<WiXProductFileProcessor>();
+		private const           string    XmlWiXV3Namespace = "http://schemas.microsoft.com/wix/2006/wi";
+		private const           string    XmlWiXV4Namespace = "http://wixtoolset.org/schemas/v4/wxs";
+		private static readonly Regex     sFileNameRegex    = new(@"^.*\.wxs$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static readonly Regex     sGuidRegex        = new(@"^[{]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[}]?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
 		/// Gets the name of the file processor.
 		/// </summary>
-		public string Name => "WiX Product File";
+		public string Name => "WiX File";
 
 		/// <summary>
 		/// Determines whether the file processor is applicable on the specified file.
@@ -54,10 +55,25 @@ namespace GriffinPlus.PreBuildWizard
 				var doc = new XmlDocument();
 				doc.Load(path);
 				var xmlNamespaceManager = new XmlNamespaceManager(doc.NameTable);
-				xmlNamespaceManager.AddNamespace("wix", XmlWiXNamespace);
-				XmlNode productNode = doc.DocumentElement?.SelectSingleNode("//wix:Product", xmlNamespaceManager);
-				XmlNode bundleNode = doc.DocumentElement?.SelectSingleNode("//wix:Bundle", xmlNamespaceManager);
-				return productNode != null || bundleNode != null;
+				XmlElement rootNode = doc.DocumentElement;
+
+				if (rootNode == null) return false;
+
+				if (rootNode.NamespaceURI.Contains(XmlWiXV3Namespace))
+				{
+					xmlNamespaceManager.AddNamespace("wix", XmlWiXV3Namespace);
+					XmlNode productNode = doc.DocumentElement?.SelectSingleNode("//wix:Product", xmlNamespaceManager);
+					XmlNode bundleNode = doc.DocumentElement?.SelectSingleNode("//wix:Bundle", xmlNamespaceManager);
+					return productNode != null || bundleNode != null;
+				}
+
+				if (rootNode.NamespaceURI.Contains(XmlWiXV4Namespace))
+				{
+					xmlNamespaceManager.AddNamespace("wix", XmlWiXV4Namespace);
+					XmlNode packageNode = doc.DocumentElement?.SelectSingleNode("//wix:Package", xmlNamespaceManager);
+					XmlNode bundleNode = doc.DocumentElement?.SelectSingleNode("//wix:Bundle", xmlNamespaceManager);
+					return packageNode != null || bundleNode != null;
+				}
 			}
 
 			return false;
@@ -78,11 +94,29 @@ namespace GriffinPlus.PreBuildWizard
 
 			doc.Load(path);
 			var xmlNamespaceManager = new XmlNamespaceManager(doc.NameTable);
-			xmlNamespaceManager.AddNamespace("wix", XmlWiXNamespace);
-			XmlNode productNode = doc.DocumentElement?.SelectSingleNode("//wix:Product", xmlNamespaceManager);
+
+			XmlElement rootNode = doc.DocumentElement;
+
+			if (rootNode == null) return Task.CompletedTask;
+
+			XmlNode packageNode = null;
+			XmlNode productNode = null;
+
+			if (rootNode.NamespaceURI.Contains(XmlWiXV3Namespace))
+			{
+				xmlNamespaceManager.AddNamespace("wix", XmlWiXV3Namespace);
+				productNode = doc.DocumentElement?.SelectSingleNode("//wix:Product", xmlNamespaceManager);
+			}
+
+			if (rootNode.NamespaceURI.Contains(XmlWiXV4Namespace))
+			{
+				xmlNamespaceManager.AddNamespace("wix", XmlWiXV4Namespace);
+				packageNode = doc.DocumentElement?.SelectSingleNode("//wix:Package", xmlNamespaceManager);
+			}
+
 			XmlNode bundleNode = doc.DocumentElement?.SelectSingleNode("//wix:Bundle", xmlNamespaceManager);
 
-			if (productNode != null)
+			if (packageNode != null || productNode != null)
 			{
 				if (appCore.Version != null)
 				{
