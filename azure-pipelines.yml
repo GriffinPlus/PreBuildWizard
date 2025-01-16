@@ -24,6 +24,14 @@ steps:
     version: '5.0.x'
     installationPath: '$(Agent.ToolsDirectory)/dotnet'
 
+# needed for GitVersion only
+- task: UseDotNet@2
+  displayName: 'Use .NET 8.0 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+    installationPath: '$(Agent.ToolsDirectory)/dotnet'
+
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet'
   inputs:
